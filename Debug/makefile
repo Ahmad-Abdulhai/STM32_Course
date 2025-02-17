@@ -61,8 +61,8 @@ all: main-build
 main-build: EmbeddedSystemsCourse.elf secondary-outputs
 
 # Tool invocations
-EmbeddedSystemsCourse.elf EmbeddedSystemsCourse.map: $(OBJS) $(USER_OBJS) D:\HEXABITZ_COURSE\PrejectsRepoCourse\STM32G0B1CEUX_FLASH.ld makefile objects.list $(OPTIONAL_TOOL_DEPS)
-	arm-none-eabi-gcc -o "EmbeddedSystemsCourse.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m0plus -T"D:\HEXABITZ_COURSE\PrejectsRepoCourse\STM32G0B1CEUX_FLASH.ld" --specs=nosys.specs -Wl,-Map="EmbeddedSystemsCourse.map" -Wl,--gc-sections -static --specs=nano.specs -mfloat-abi=soft -mthumb -Wl,--start-group -lc -lm -Wl,--end-group
+EmbeddedSystemsCourse.elf EmbeddedSystemsCourse.map: $(OBJS) $(USER_OBJS) D:\HEXABITZ_COURSE\RepoProjectsCourseEmbeddedSystems\STM32G0B1CEUX_FLASH.ld makefile objects.list $(OPTIONAL_TOOL_DEPS)
+	arm-none-eabi-gcc -o "EmbeddedSystemsCourse.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m0plus -T"D:\HEXABITZ_COURSE\RepoProjectsCourseEmbeddedSystems\STM32G0B1CEUX_FLASH.ld" --specs=nosys.specs -Wl,-Map="EmbeddedSystemsCourse.map" -Wl,--gc-sections -static --specs=nano.specs -mfloat-abi=soft -mthumb -Wl,--start-group -lc -lm -Wl,--end-group
 	@echo 'Finished building target: $@'
 	@echo ' '
 

@@ -32,7 +32,7 @@ Core/Src/main.o: ../Core/Src/main.c ../Core/Inc/main.h \
  ../Drivers/STM32G0xx_HAL_Driver/Inc/stm32g0xx_hal_pwr_ex.h \
  ../Drivers/STM32G0xx_HAL_Driver/Inc/stm32g0xx_hal_tim.h \
  ../Drivers/STM32G0xx_HAL_Driver/Inc/stm32g0xx_hal_tim_ex.h \
- D:/HEXABITZ_COURSE/PrejectsRepoCourse/LCD/Inc/lcd_txt.h \
+ D:/HEXABITZ_COURSE/RepoProjectsCourseEmbeddedSystems/LCD/Inc/lcd_txt.h \
  ../Drivers/STM32G0xx_HAL_Driver/Inc/stm32G0xx_hal.h
 ../Core/Inc/main.h:
 ../Drivers/STM32G0xx_HAL_Driver/Inc/stm32g0xx_hal.h:
@@ -68,5 +68,5 @@ Core/Src/main.o: ../Core/Src/main.c ../Core/Inc/main.h \
 ../Drivers/STM32G0xx_HAL_Driver/Inc/stm32g0xx_hal_pwr_ex.h:
 ../Drivers/STM32G0xx_HAL_Driver/Inc/stm32g0xx_hal_tim.h:
 ../Drivers/STM32G0xx_HAL_Driver/Inc/stm32g0xx_hal_tim_ex.h:
-D:/HEXABITZ_COURSE/PrejectsRepoCourse/LCD/Inc/lcd_txt.h:
+D:/HEXABITZ_COURSE/RepoProjectsCourseEmbeddedSystems/LCD/Inc/lcd_txt.h:
 ../Drivers/STM32G0xx_HAL_Driver/Inc/stm32G0xx_hal.h:
