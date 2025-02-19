@@ -1,3 +1,4 @@
+
 /* USER CODE BEGIN Header */
 /**
   ******************************************************************************
@@ -63,6 +64,7 @@ extern DMA_HandleTypeDef hdma_adc1;
   */
 void HAL_MspInit(void)
 {
+
   /* USER CODE BEGIN MspInit 0 */
 
   /* USER CODE END MspInit 0 */
@@ -98,37 +100,27 @@ void HAL_MspInit(void)
 void HAL_ADC_MspInit(ADC_HandleTypeDef* hadc)
 {
   GPIO_InitTypeDef GPIO_InitStruct = {0};
-  RCC_PeriphCLKInitTypeDef PeriphClkInit = {0};
   if(hadc->Instance==ADC1)
   {
   /* USER CODE BEGIN ADC1_MspInit 0 */
 
   /* USER CODE END ADC1_MspInit 0 */
-
-  /** Initializes the peripherals clocks
-  */
-    PeriphClkInit.PeriphClockSelection = RCC_PERIPHCLK_ADC;
-    PeriphClkInit.AdcClockSelection = RCC_ADCCLKSOURCE_SYSCLK;
-    if (HAL_RCCEx_PeriphCLKConfig(&PeriphClkInit) != HAL_OK)
-    {
-      Error_Handler();
-    }
-
     /* Peripheral clock enable */
     __HAL_RCC_ADC_CLK_ENABLE();
 
     __HAL_RCC_GPIOA_CLK_ENABLE();
     /**ADC1 GPIO Configuration
     PA6     ------> ADC1_IN6
+    PA7     ------> ADC1_IN7
     */
-    GPIO_InitStruct.Pin = GPIO_PIN_6;
+    GPIO_InitStruct.Pin = GPIO_PIN_6|GPIO_PIN_7;
     GPIO_InitStruct.Mode = GPIO_MODE_ANALOG;
     GPIO_InitStruct.Pull = GPIO_NOPULL;
     HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
     /* ADC1 DMA Init */
     /* ADC1 Init */
-    hdma_adc1.Instance = DMA1_Channel6;
+    hdma_adc1.Instance = DMA1_Channel1;
     hdma_adc1.Init.Request = DMA_REQUEST_ADC1;
     hdma_adc1.Init.Direction = DMA_PERIPH_TO_MEMORY;
     hdma_adc1.Init.PeriphInc = DMA_PINC_DISABLE;
@@ -147,6 +139,7 @@ void HAL_ADC_MspInit(ADC_HandleTypeDef* hadc)
   /* USER CODE BEGIN ADC1_MspInit 1 */
 
   /* USER CODE END ADC1_MspInit 1 */
+
   }
 
 }
@@ -169,8 +162,9 @@ void HAL_ADC_MspDeInit(ADC_HandleTypeDef* hadc)
 
     /**ADC1 GPIO Configuration
     PA6     ------> ADC1_IN6
+    PA7     ------> ADC1_IN7
     */
-    HAL_GPIO_DeInit(GPIOA, GPIO_PIN_6);
+    HAL_GPIO_DeInit(GPIOA, GPIO_PIN_6|GPIO_PIN_7);
 
     /* ADC1 DMA DeInit */
     HAL_DMA_DeInit(hadc->DMA_Handle);

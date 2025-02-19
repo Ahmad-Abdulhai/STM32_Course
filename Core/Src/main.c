@@ -38,6 +38,7 @@
 /*Each 1 degree Celsius give On out 10 mVolot*/
 #define LM35_GAIN   (uint16_t) 10
 /* Definition of ADCx conversions data table size */
+#define ADC_CONVERTED_DATA_BUFFER_SIZE   ((uint32_t)  3)   /* Size of array aADCxConvertedData[] */
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -46,20 +47,22 @@
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
- ADC_HandleTypeDef hadc1;
+ADC_HandleTypeDef hadc1;
 DMA_HandleTypeDef hdma_adc1;
 
 /* USER CODE BEGIN PV */
-uint32_t ADC_RES = 0ul;
-float temperature = 0.0f;
+uint16_t ADC_RES[ADC_CONVERTED_DATA_BUFFER_SIZE] = { 0 };
+float LMtemperature = 0.0f;
+float STtemperature = 0.0f;
+float mVoltage = 0.0f;
 char buff[16] = { 0 };
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
-static void MX_ADC1_Init(void);
 static void MX_DMA_Init(void);
+static void MX_ADC1_Init(void);
 /* USER CODE BEGIN PFP */
 //void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef *hadc) {
 //	/* Read & update The ADC Conversion Result*/
@@ -78,6 +81,7 @@ static void MX_DMA_Init(void);
   */
 int main(void)
 {
+
   /* USER CODE BEGIN 1 */
 
   /* USER CODE END 1 */
@@ -100,18 +104,17 @@ int main(void)
 
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
-  /* Pay attention to this arrangement (ADC and then DMA) this arrangement is very important otherwise the ADC will not work*/
-  	MX_DMA_Init();
-  	MX_ADC1_Init();
+  MX_DMA_Init();
+  MX_ADC1_Init();
   /* USER CODE BEGIN 2 */
 	/*Start calibration for ADC*/
 	HAL_ADCEx_Calibration_Start(&hadc1);
 	/*Init ADC with DMA in single conversion mode*/
-	HAL_ADC_Start_DMA(&hadc1, &ADC_RES, 1);
+	HAL_ADC_Start_DMA(&hadc1, (uint32_t*)ADC_RES, ADC_CONVERTED_DATA_BUFFER_SIZE);
 	/*Init LCD*/
 	lcd_init();
 	/*Welcome screen lcd */
-	lcd_puts(0, 2, "ADC DMA");
+	lcd_puts(0, 2, "ADC DMA Mul CH");
 	HAL_Delay(2000);
   /* USER CODE END 2 */
 
@@ -124,11 +127,17 @@ int main(void)
 		/* in single conversion mode we should triggered ADC by software starting every while loop*/
 		HAL_ADC_Start(&hadc1);
 		// Convert ADC value to temperature in Celsius
-		temperature = ((float) ADC_RES / ADC_MAX ) * (ADC_REFERNCE / LM35_GAIN );
+		LMtemperature = ((float) ADC_RES[1] / ADC_MAX ) * (ADC_REFERNCE / LM35_GAIN );
+		STtemperature = ((float) ADC_RES[2] / ADC_MAX ) * (ADC_REFERNCE / LM35_GAIN );
+		/*read analog input mVoltage*/
+		mVoltage = ADC_RES[0] * ((float) ADC_REFERNCE / ADC_MAX);
 		/*Clear LCD and print a new value*/
 		lcd_clear();
-		sprintf(buff, "temp: %03dC", (uint16_t) temperature);
+		sprintf(buff, "tem:LM%03d ST%03d", (uint16_t) LMtemperature,(uint16_t)STtemperature);
 		lcd_puts(0, 0, buff);
+		HAL_Delay(5);
+		sprintf(buff, "voltage:%03dmV", (uint16_t) mVoltage);
+		lcd_puts(1, 0, buff);
 		HAL_Delay(500);
 
 	}
@@ -205,12 +214,13 @@ static void MX_ADC1_Init(void)
   hadc1.Init.ClockPrescaler = ADC_CLOCK_SYNC_PCLK_DIV2;
   hadc1.Init.Resolution = ADC_RESOLUTION_12B;
   hadc1.Init.DataAlign = ADC_DATAALIGN_RIGHT;
-  hadc1.Init.ScanConvMode = ADC_SCAN_DISABLE;
+  hadc1.Init.ScanConvMode = ADC_SCAN_ENABLE;
   hadc1.Init.EOCSelection = ADC_EOC_SINGLE_CONV;
   hadc1.Init.LowPowerAutoWait = DISABLE;
   hadc1.Init.LowPowerAutoPowerOff = DISABLE;
   hadc1.Init.ContinuousConvMode = DISABLE;
-  hadc1.Init.NbrOfConversion = 1;
+  hadc1.Init.NbrOfConversion = 3;
+  hadc1.Init.DiscontinuousConvMode = DISABLE;
   hadc1.Init.ExternalTrigConv = ADC_SOFTWARE_START;
   hadc1.Init.ExternalTrigConvEdge = ADC_EXTERNALTRIGCONVEDGE_NONE;
   hadc1.Init.DMAContinuousRequests = ENABLE;
@@ -226,9 +236,27 @@ static void MX_ADC1_Init(void)
 
   /** Configure Regular Channel
   */
-  sConfig.Channel = ADC_CHANNEL_6;
+  sConfig.Channel = ADC_CHANNEL_7;
   sConfig.Rank = ADC_REGULAR_RANK_1;
   sConfig.SamplingTime = ADC_SAMPLINGTIME_COMMON_1;
+  if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+
+  /** Configure Regular Channel
+  */
+  sConfig.Channel = ADC_CHANNEL_6;
+  sConfig.Rank = ADC_REGULAR_RANK_2;
+  if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+
+  /** Configure Regular Channel
+  */
+  sConfig.Channel = ADC_CHANNEL_TEMPSENSOR;
+  sConfig.Rank = ADC_REGULAR_RANK_3;
   if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
   {
     Error_Handler();
@@ -249,9 +277,9 @@ static void MX_DMA_Init(void)
   __HAL_RCC_DMA1_CLK_ENABLE();
 
   /* DMA interrupt init */
-  /* DMA1_Ch4_7_DMA2_Ch1_5_DMAMUX1_OVR_IRQn interrupt configuration */
-  HAL_NVIC_SetPriority(DMA1_Ch4_7_DMA2_Ch1_5_DMAMUX1_OVR_IRQn, 0, 0);
-  HAL_NVIC_EnableIRQ(DMA1_Ch4_7_DMA2_Ch1_5_DMAMUX1_OVR_IRQn);
+  /* DMA1_Channel1_IRQn interrupt configuration */
+  HAL_NVIC_SetPriority(DMA1_Channel1_IRQn, 0, 0);
+  HAL_NVIC_EnableIRQ(DMA1_Channel1_IRQn);
 
 }
 
@@ -263,6 +291,8 @@ static void MX_DMA_Init(void)
 static void MX_GPIO_Init(void)
 {
   GPIO_InitTypeDef GPIO_InitStruct = {0};
+/* USER CODE BEGIN MX_GPIO_Init_1 */
+/* USER CODE END MX_GPIO_Init_1 */
 
   /* GPIO Ports Clock Enable */
   __HAL_RCC_GPIOA_CLK_ENABLE();
@@ -280,6 +310,8 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
+/* USER CODE BEGIN MX_GPIO_Init_2 */
+/* USER CODE END MX_GPIO_Init_2 */
 }
 
 /* USER CODE BEGIN 4 */

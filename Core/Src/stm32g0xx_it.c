@@ -141,17 +141,17 @@ void SysTick_Handler(void)
 /******************************************************************************/
 
 /**
-  * @brief This function handles DMA1 Ch4 to Ch7, DMA2 Ch1 to Ch5 and DMAMUX1 Overrun Interrupts.
+  * @brief This function handles DMA1 channel 1 interrupt.
   */
-void DMA1_Ch4_7_DMA2_Ch1_5_DMAMUX1_OVR_IRQHandler(void)
+void DMA1_Channel1_IRQHandler(void)
 {
-  /* USER CODE BEGIN DMA1_Ch4_7_DMA2_Ch1_5_DMAMUX1_OVR_IRQn 0 */
+  /* USER CODE BEGIN DMA1_Channel1_IRQn 0 */
 
-  /* USER CODE END DMA1_Ch4_7_DMA2_Ch1_5_DMAMUX1_OVR_IRQn 0 */
+  /* USER CODE END DMA1_Channel1_IRQn 0 */
   HAL_DMA_IRQHandler(&hdma_adc1);
-  /* USER CODE BEGIN DMA1_Ch4_7_DMA2_Ch1_5_DMAMUX1_OVR_IRQn 1 */
+  /* USER CODE BEGIN DMA1_Channel1_IRQn 1 */
 
-  /* USER CODE END DMA1_Ch4_7_DMA2_Ch1_5_DMAMUX1_OVR_IRQn 1 */
+  /* USER CODE END DMA1_Channel1_IRQn 1 */
 }
 
 /* USER CODE BEGIN 1 */
