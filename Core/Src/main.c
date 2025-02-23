@@ -21,7 +21,7 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include <stdio.h>
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -42,7 +42,8 @@
  UART_HandleTypeDef huart2;
 
 /* USER CODE BEGIN PV */
- uint8_t data[13]= "Hello World\r\n";
+ /*buffer data to send it via UART2*/
+ uint8_t data[10240];
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -88,17 +89,24 @@ int main(void)
   MX_GPIO_Init();
   MX_USART2_UART_Init();
   /* USER CODE BEGIN 2 */
-
+  /*given values to the matrix*/
+  for (uint32_t i=0; i<10240Ul; i++)
+  {
+	  data[i] = i&(0xff);
+  }
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-    /* USER CODE END WHILE */
+	  /* USER CODE END WHILE */
 
-    /* USER CODE BEGIN 3 */
+	  /* USER CODE BEGIN 3 */
+	  /*Transmit data Via UART2 using Polling mode*/
 	  HAL_UART_Transmit(&huart2, data,sizeof(data), 1000);
+	  /*Toggle PC13 LED on board*/
+	  HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_13);
 	  HAL_Delay(500);
   }
   /* USER CODE END 3 */
