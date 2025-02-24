@@ -43,10 +43,8 @@ UART_HandleTypeDef huart2;
 DMA_HandleTypeDef hdma_usart2_tx;
 
 /* USER CODE BEGIN PV */
-/*buffer data to send it via UART2*/
-uint8_t data[10240];
-/*Flag for interrupt callback UART */
-uint8_t dataSent = 1;
+/*buffer data to save the received data via UART2*/
+uint8_t rxData[30];
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -55,10 +53,7 @@ static void MX_GPIO_Init(void);
 static void MX_DMA_Init(void);
 static void MX_USART2_UART_Init(void);
 /* USER CODE BEGIN PFP */
-/*UART interrupt Callback */
-//void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart) {
-//	dataSent = 1;
-//}
+
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -96,12 +91,7 @@ int main(void) {
 	MX_DMA_Init();
 	MX_USART2_UART_Init();
 	/* USER CODE BEGIN 2 */
-	/*given values to the matrix*/
-	for (uint32_t i = 0; i < 10240Ul; i++) {
-		data[i] = i & (0xff);
-	}
-	/*Transmit data Via UART2 using DMA[Circular] mode*/
-	HAL_UART_Transmit_DMA(&huart2, data, sizeof(data));
+
 	/* USER CODE END 2 */
 
 	/* Infinite loop */
@@ -110,6 +100,8 @@ int main(void) {
 		/* USER CODE END WHILE */
 
 		/* USER CODE BEGIN 3 */
+		/*Received data via UART2 in polling mode*/
+		HAL_UART_Receive(&huart2, rxData, sizeof(rxData), 1000);  // Try HAL_MAX_DELAY and See the difference
 		/*Toggle PC13 LED on board*/
 		HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_13);
 		HAL_Delay(500);
