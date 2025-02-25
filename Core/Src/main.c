@@ -31,11 +31,12 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
+/*Size of vReceived Data*/
+#define RX_DATA_BUFFER  (uint8_t) 5
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
 /* USER CODE BEGIN PM */
-
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
@@ -44,7 +45,9 @@ DMA_HandleTypeDef hdma_usart2_tx;
 
 /* USER CODE BEGIN PV */
 /*buffer data to save the received data via UART2*/
-uint8_t rxData[30];
+uint8_t rxData[RX_DATA_BUFFER ];
+/*buffer data to send OK message*/
+uint8_t txData[20] = "Msg Receiving OK\r\n";
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -53,7 +56,16 @@ static void MX_GPIO_Init(void);
 static void MX_DMA_Init(void);
 static void MX_USART2_UART_Init(void);
 /* USER CODE BEGIN PFP */
-
+/*Receiving data interrupt callback
+ * Once all the 5 bytes have been received, an interrupt will trigger and the RX complete callback will be called.*/
+void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
+	if (huart == &huart2) {
+		/* The interrupt is disabled after each trigger, so we need to call the Receive_IT function again at the end of the callback.*/
+		HAL_UART_Receive_IT(&huart2, rxData, RX_DATA_BUFFER);
+		/*Transmitting OK message after receiving 5 bytes */
+		HAL_UART_Transmit(&huart2, txData, sizeof(txData), 200);
+	}
+}
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -91,7 +103,8 @@ int main(void) {
 	MX_DMA_Init();
 	MX_USART2_UART_Init();
 	/* USER CODE BEGIN 2 */
-
+	/*Received data via UART2 in Interrupt mode*/
+	HAL_UART_Receive_IT(&huart2, rxData, RX_DATA_BUFFER);
 	/* USER CODE END 2 */
 
 	/* Infinite loop */
@@ -100,8 +113,6 @@ int main(void) {
 		/* USER CODE END WHILE */
 
 		/* USER CODE BEGIN 3 */
-		/*Received data via UART2 in polling mode*/
-		HAL_UART_Receive(&huart2, rxData, sizeof(rxData), 1000);  // Try HAL_MAX_DELAY and See the difference
 		/*Toggle PC13 LED on board*/
 		HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_13);
 		HAL_Delay(500);
