@@ -22,6 +22,7 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include <stdio.h>
+#include <string.h>
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -32,7 +33,7 @@
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
 /*Size of vReceived Data*/
-#define RX_DATA_BUFFER  (uint8_t) 5
+#define RX_DATA_BUFFER  (uint8_t) 10
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -46,8 +47,21 @@ DMA_HandleTypeDef hdma_usart2_tx;
 /* USER CODE BEGIN PV */
 /*buffer data to save the received data via UART2*/
 uint8_t rxData[RX_DATA_BUFFER ];
-/*buffer data to send OK message*/
-uint8_t txData[20] = "Msg Receiving OK\r\n";
+/*Byte received from UART*/
+uint8_t temp;
+/*Variable of index the array*/
+uint8_t indx = 0;
+/*String Command from user*/
+char LedOn[6] = "LED ON";
+char LedOff[7] = "LED OFF";
+/*buffer to compare with user command*/
+char command[8];
+/*User messages to print it on terminal*/
+char UserMSG[3][27] = {
+	"\r\nNot Recognized Command\r\n",
+	"\r\nLED is turned ON\r\n",
+	"\r\nLED is turned OFF\r\n"
+};
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -57,13 +71,41 @@ static void MX_DMA_Init(void);
 static void MX_USART2_UART_Init(void);
 /* USER CODE BEGIN PFP */
 /*Receiving data interrupt callback
- * Once all the 5 bytes have been received, an interrupt will trigger and the RX complete callback will be called.*/
+ * Once all the 1 byte have been received, an interrupt will trigger and the RX complete callback will be called.*/
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
 	if (huart == &huart2) {
+		/*Increase index of the rxData array with every byte received and print the received byte onrxData array */
+		memcpy(rxData + indx, &temp, 1);
+		/*echo transmit the received byte*/
+		HAL_UART_Transmit(&huart2, &temp, sizeof(temp),10);
+		++indx;
+		/*Reset the index after reached 10 bytes received*/
+		if (indx >= RX_DATA_BUFFER)
+			indx = 0;
+		/*Now the command has been fully received and ready for comparison and determination of the order  */
+		if (temp == '\r') {
+			memcpy(command, rxData, indx);
+			indx = 0;
+			/*Compare the Received command*/
+			if (!strncmp(command, LedOn, strlen(LedOn))) {
+				/*SET PC13 LED on board*/
+				HAL_GPIO_WritePin(GPIOC, GPIO_PIN_13, GPIO_PIN_SET);
+				/*Transmitting user message"LED is turned ON\r\n"*/
+				HAL_UART_Transmit(&huart2, (uint8_t*) UserMSG[1], strlen(UserMSG[1]), 200);
+
+			} else if (!strncmp(command, LedOff, strlen(LedOff))) {
+				/*RESET PC13 LED on board*/
+				HAL_GPIO_WritePin(GPIOC, GPIO_PIN_13, GPIO_PIN_RESET);
+				/*Transmitting user message"LED is turned OFF\r\n"*/
+				HAL_UART_Transmit(&huart2, (uint8_t*) UserMSG[2], strlen(UserMSG[2]), 200);
+
+			} else {
+				/*Transmitting user message"Not Recognized Command\r\n"*/
+				HAL_UART_Transmit(&huart2, (uint8_t*) UserMSG[0], strlen(UserMSG[0]), 200);
+			}
+		}
 		/* The interrupt is disabled after each trigger, so we need to call the Receive_IT function again at the end of the callback.*/
-		HAL_UART_Receive_IT(&huart2, rxData, RX_DATA_BUFFER);
-		/*Transmitting OK message after receiving 5 bytes */
-		HAL_UART_Transmit(&huart2, txData, sizeof(txData), 200);
+		HAL_UART_Receive_IT(&huart2, &temp, 1);
 	}
 }
 /* USER CODE END PFP */
@@ -104,7 +146,7 @@ int main(void) {
 	MX_USART2_UART_Init();
 	/* USER CODE BEGIN 2 */
 	/*Received data via UART2 in Interrupt mode*/
-	HAL_UART_Receive_IT(&huart2, rxData, RX_DATA_BUFFER);
+	HAL_UART_Receive_IT(&huart2, &temp, 1);
 	/* USER CODE END 2 */
 
 	/* Infinite loop */
@@ -113,9 +155,7 @@ int main(void) {
 		/* USER CODE END WHILE */
 
 		/* USER CODE BEGIN 3 */
-		/*Toggle PC13 LED on board*/
-		HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_13);
-		HAL_Delay(500);
+
 	}
 	/* USER CODE END 3 */
 }
