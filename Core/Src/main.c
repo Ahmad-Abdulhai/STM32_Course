@@ -47,7 +47,7 @@ DMA_HandleTypeDef hdma_usart2_rx;
 
 /* USER CODE BEGIN PV */
 /*buffer data to save the received data via UART2*/
-uint8_t rxData[RX_DATA_BUFFER ];
+uint8_t rxData[RX_DATA_BUFFER];
 /*buffer data to send OK message*/
 uint8_t txData[20] = "Msg Receiving OK\r\n";
 /* USER CODE END PV */
@@ -62,8 +62,6 @@ static void MX_USART2_UART_Init(void);
  * Once all the bytes have been received, an interrupt will trigger and the RX complete callback will be called.*/
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
 	if (huart == &huart2) {
-		/* The DMA is disabled after have been received full bytes because the buffer of DMA in [NORMAL] mode, so we need to call the Receive_DMA function again at the end of the callback.*/
-		HAL_UART_Receive_DMA(&huart2, rxData,RX_DATA_BUFFER);
 		/*Transmitting OK message after receiving 20 bytes */
 		HAL_UART_Transmit(&huart2, txData, sizeof(txData), 200);
 	}
@@ -106,22 +104,22 @@ int main(void)
   MX_DMA_Init();
   MX_USART2_UART_Init();
   /* USER CODE BEGIN 2 */
-	/*Received data via UART2 in DMA [NORMAL buffer] mode*/
+	/*Received data via UART2 in DMA [CIRCULAR buffer] mode*/
 	HAL_UART_Receive_DMA(&huart2, rxData,RX_DATA_BUFFER);
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
 	while (1) {
-		/* USER CODE END WHILE */
+    /* USER CODE END WHILE */
 
-		/* USER CODE BEGIN 3 */
+    /* USER CODE BEGIN 3 */
 		/*Toggle PC13 LED on board*/
 		HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_13);
 		HAL_Delay(500);
 
 	}
-	/* USER CODE END 3 */
+  /* USER CODE END 3 */
 }
 
 /**
