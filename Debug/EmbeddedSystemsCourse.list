@@ -21,9 +21,9 @@ Idx Name          Size      VMA       LMA       File off  Algn
                   CONTENTS, ALLOC, LOAD, DATA
   8 .data         00000014  20000000  08006ce4  00020000  2**2
                   CONTENTS, ALLOC, LOAD, DATA
-  9 .bss          00000474  20000014  08006cf8  00020014  2**2
+  9 .bss          00000274  20000014  08006cf8  00020014  2**2
                   ALLOC
- 10 ._user_heap_stack 00000600  20000488  08006cf8  00020488  2**0
+ 10 ._user_heap_stack 00000600  20000288  08006cf8  00020288  2**0
                   ALLOC
  11 .ARM.attributes 00000028  00000000  00000000  00020014  2**0
                   CONTENTS, READONLY
@@ -349,7 +349,7 @@ void GradualFillScreen(void) {
  80002b0:	801a      	strh	r2, [r3, #0]
  80002b2:	1dbb      	adds	r3, r7, #6
  80002b4:	881b      	ldrh	r3, [r3, #0]
- 80002b6:	2b3f      	cmp	r3, #63	; 0x3f
+ 80002b6:	2b1f      	cmp	r3, #31
  80002b8:	d9e6      	bls.n	8000288 <GradualFillScreen+0x20>
 	}
 	/* Pause for effect*/
@@ -367,7 +367,7 @@ void GradualFillScreen(void) {
  80002ca:	2200      	movs	r2, #0
  80002cc:	801a      	strh	r2, [r3, #0]
  80002ce:	e020      	b.n	8000312 <GradualFillScreen+0xaa>
-		SSD1306_DrawFilledRectangle(OLED_HEIGHT - size / 2, OLED_HEIGHT/2 - size / 2, size, size,
+		SSD1306_DrawFilledRectangle(64 - size / 2, OLED_HEIGHT/2 - size / 2, size, size,
  80002d0:	1d3b      	adds	r3, r7, #4
  80002d2:	881b      	ldrh	r3, [r3, #0]
  80002d4:	085b      	lsrs	r3, r3, #1
@@ -379,7 +379,7 @@ void GradualFillScreen(void) {
  80002e0:	881b      	ldrh	r3, [r3, #0]
  80002e2:	085b      	lsrs	r3, r3, #1
  80002e4:	b29b      	uxth	r3, r3
- 80002e6:	2220      	movs	r2, #32
+ 80002e6:	2210      	movs	r2, #16
  80002e8:	1ad3      	subs	r3, r2, r3
  80002ea:	b299      	uxth	r1, r3
  80002ec:	1d3b      	adds	r3, r7, #4
@@ -404,7 +404,7 @@ void GradualFillScreen(void) {
  8000310:	801a      	strh	r2, [r3, #0]
  8000312:	1d3b      	adds	r3, r7, #4
  8000314:	881b      	ldrh	r3, [r3, #0]
- 8000316:	2b3f      	cmp	r3, #63	; 0x3f
+ 8000316:	2b1f      	cmp	r3, #31
  8000318:	d9da      	bls.n	80002d0 <GradualFillScreen+0x68>
 	}
 
@@ -422,7 +422,7 @@ void GradualFillScreen(void) {
  800032a:	2200      	movs	r2, #0
  800032c:	801a      	strh	r2, [r3, #0]
  800032e:	e018      	b.n	8000362 <GradualFillScreen+0xfa>
-		SSD1306_DrawTriangle(OLED_HEIGHT, 0, 0, height, 127, height,
+		SSD1306_DrawTriangle(64, 0, 0, height, 127, height,
  8000330:	1cbb      	adds	r3, r7, #2
  8000332:	881a      	ldrh	r2, [r3, #0]
  8000334:	2301      	movs	r3, #1
@@ -451,7 +451,7 @@ void GradualFillScreen(void) {
  8000360:	801a      	strh	r2, [r3, #0]
  8000362:	1cbb      	adds	r3, r7, #2
  8000364:	881b      	ldrh	r3, [r3, #0]
- 8000366:	2b3f      	cmp	r3, #63	; 0x3f
+ 8000366:	2b1f      	cmp	r3, #31
  8000368:	d9e2      	bls.n	8000330 <GradualFillScreen+0xc8>
 	}
 	/* Pause for effect*/
@@ -469,12 +469,12 @@ void GradualFillScreen(void) {
  800037a:	2200      	movs	r2, #0
  800037c:	801a      	strh	r2, [r3, #0]
  800037e:	e011      	b.n	80003a4 <GradualFillScreen+0x13c>
-		SSD1306_DrawFilledCircle( OLED_HEIGHT, OLED_HEIGHT/2, r, SSD1306_COLOR_WHITE);
+		SSD1306_DrawFilledCircle(64, OLED_HEIGHT/2, r, SSD1306_COLOR_WHITE);
  8000380:	003b      	movs	r3, r7
  8000382:	2200      	movs	r2, #0
  8000384:	5e9a      	ldrsh	r2, [r3, r2]
  8000386:	2301      	movs	r3, #1
- 8000388:	2120      	movs	r1, #32
+ 8000388:	2110      	movs	r1, #16
  800038a:	2040      	movs	r0, #64	; 0x40
  800038c:	f002 fe8a 	bl	80030a4 <SSD1306_DrawFilledCircle>
 		SSD1306_UpdateScreen();
@@ -490,7 +490,7 @@ void GradualFillScreen(void) {
  80003a2:	801a      	strh	r2, [r3, #0]
  80003a4:	003b      	movs	r3, r7
  80003a6:	881b      	ldrh	r3, [r3, #0]
- 80003a8:	2b1f      	cmp	r3, #31
+ 80003a8:	2b0f      	cmp	r3, #15
  80003aa:	d9e9      	bls.n	8000380 <GradualFillScreen+0x118>
 	}
 	/*scroll entire screen (Page0 to Page7) right*/
@@ -1370,7 +1370,7 @@ LoopForever:
   ldr r2, =_sbss
  8000810:	20000014 	.word	0x20000014
   ldr r4, =_ebss
- 8000814:	20000488 	.word	0x20000488
+ 8000814:	20000288 	.word	0x20000288
 
 08000818 <ADC1_COMP_IRQHandler>:
  * @retval None
@@ -7413,12 +7413,12 @@ uint8_t SSD1306_Init(void) {
 
 #if (SSD1306_HEIGHT == 32)
 	SSD1306_WRITECOMMAND(0x1F); //
-#elif (SSD1306_HEIGHT == 64)
-	SSD1306_WRITECOMMAND(0x3F); //
- 800283e:	223f      	movs	r2, #63	; 0x3f
+ 800283e:	221f      	movs	r2, #31
  8002840:	2100      	movs	r1, #0
  8002842:	2078      	movs	r0, #120	; 0x78
  8002844:	f000 ff16 	bl	8003674 <ssd1306_I2C_Write>
+#elif (SSD1306_HEIGHT == 64)
+	SSD1306_WRITECOMMAND(0x3F); //
 #elif (SSD1306_HEIGHT == 128)
 	SSD1306_WRITECOMMAND(0x3F); // Seems to work for 128px high displays too.
 #endif
@@ -7465,12 +7465,11 @@ uint8_t SSD1306_Init(void) {
  8002894:	f000 feee 	bl	8003674 <ssd1306_I2C_Write>
 #if (SSD1306_HEIGHT == 32)
 	SSD1306_WRITECOMMAND(0x02);
-#elif (SSD1306_HEIGHT == 64)
-	SSD1306_WRITECOMMAND(0x12);
- 8002898:	2212      	movs	r2, #18
+ 8002898:	2202      	movs	r2, #2
  800289a:	2100      	movs	r1, #0
  800289c:	2078      	movs	r0, #120	; 0x78
  800289e:	f000 fee9 	bl	8003674 <ssd1306_I2C_Write>
+	SSD1306_WRITECOMMAND(0x12);
 #elif (SSD1306_HEIGHT == 128)
 	SSD1306_WRITECOMMAND(0x12);
 #endif
@@ -7544,7 +7543,7 @@ uint8_t SSD1306_Init(void) {
  8002904:	00004e20 	.word	0x00004e20
  8002908:	20000030 	.word	0x20000030
  800290c:	000009c4 	.word	0x000009c4
- 8002910:	20000480 	.word	0x20000480
+ 8002910:	20000280 	.word	0x20000280
 
 08002914 <SSD1306_UpdateScreen>:
 
@@ -7632,7 +7631,7 @@ void SSD1306_Fill(SSD1306_COLOR_t color) {
  8002992:	e000      	b.n	8002996 <SSD1306_Fill+0x1a>
  8002994:	23ff      	movs	r3, #255	; 0xff
  8002996:	2280      	movs	r2, #128	; 0x80
- 8002998:	00d2      	lsls	r2, r2, #3
+ 8002998:	0092      	lsls	r2, r2, #2
  800299a:	4804      	ldr	r0, [pc, #16]	; (80029ac <SSD1306_Fill+0x30>)
  800299c:	0019      	movs	r1, r3
  800299e:	f000 feb5 	bl	800370c <memset>
@@ -7670,7 +7669,7 @@ void SSD1306_DrawPixel(uint16_t x, uint16_t y, SSD1306_COLOR_t color) {
 		x >= SSD1306_WIDTH ||
  80029d6:	1d3b      	adds	r3, r7, #4
  80029d8:	881b      	ldrh	r3, [r3, #0]
- 80029da:	2b3f      	cmp	r3, #63	; 0x3f
+ 80029da:	2b1f      	cmp	r3, #31
  80029dc:	d84e      	bhi.n	8002a7c <SSD1306_DrawPixel+0xcc>
 		/* Error */
 		return;
@@ -7772,7 +7771,7 @@ void SSD1306_DrawPixel(uint16_t x, uint16_t y, SSD1306_COLOR_t color) {
  8002a7e:	46bd      	mov	sp, r7
  8002a80:	b003      	add	sp, #12
  8002a82:	bd90      	pop	{r4, r7, pc}
- 8002a84:	20000480 	.word	0x20000480
+ 8002a84:	20000280 	.word	0x20000280
  8002a88:	20000080 	.word	0x20000080
 
 08002a8c <SSD1306_GotoXY>:
@@ -7804,7 +7803,7 @@ void SSD1306_GotoXY(uint16_t x, uint16_t y) {
  8002ab2:	b002      	add	sp, #8
  8002ab4:	bd80      	pop	{r7, pc}
  8002ab6:	46c0      	nop			; (mov r8, r8)
- 8002ab8:	20000480 	.word	0x20000480
+ 8002ab8:	20000280 	.word	0x20000280
 
 08002abc <SSD1306_Putc>:
 
@@ -7842,7 +7841,7 @@ char SSD1306_Putc(char ch, FontDef_t* Font, SSD1306_COLOR_t color) {
  8002aea:	785b      	ldrb	r3, [r3, #1]
  8002aec:	18d3      	adds	r3, r2, r3
 		SSD1306_WIDTH <= (SSD1306.CurrentX + Font->FontWidth) ||
- 8002aee:	2b3f      	cmp	r3, #63	; 0x3f
+ 8002aee:	2b1f      	cmp	r3, #31
  8002af0:	dd01      	ble.n	8002af6 <SSD1306_Putc+0x3a>
 	) {
 		/* Error */
@@ -7968,7 +7967,7 @@ char SSD1306_Putc(char ch, FontDef_t* Font, SSD1306_COLOR_t color) {
  8002bb6:	46bd      	mov	sp, r7
  8002bb8:	b006      	add	sp, #24
  8002bba:	bd80      	pop	{r7, pc}
- 8002bbc:	20000480 	.word	0x20000480
+ 8002bbc:	20000280 	.word	0x20000280
 
 08002bc0 <SSD1306_Puts>:
 
@@ -8076,21 +8075,21 @@ void SSD1306_DrawLine(uint16_t x0, uint16_t y0, uint16_t x1, uint16_t y1, SSD130
 	if (y0 >= SSD1306_HEIGHT) {
  8002c4e:	1d3b      	adds	r3, r7, #4
  8002c50:	881b      	ldrh	r3, [r3, #0]
- 8002c52:	2b3f      	cmp	r3, #63	; 0x3f
+ 8002c52:	2b1f      	cmp	r3, #31
  8002c54:	d902      	bls.n	8002c5c <SSD1306_DrawLine+0x50>
 		y0 = SSD1306_HEIGHT - 1;
  8002c56:	1d3b      	adds	r3, r7, #4
- 8002c58:	223f      	movs	r2, #63	; 0x3f
+ 8002c58:	221f      	movs	r2, #31
  8002c5a:	801a      	strh	r2, [r3, #0]
 	}
 	if (y1 >= SSD1306_HEIGHT) {
  8002c5c:	003b      	movs	r3, r7
  8002c5e:	881b      	ldrh	r3, [r3, #0]
- 8002c60:	2b3f      	cmp	r3, #63	; 0x3f
+ 8002c60:	2b1f      	cmp	r3, #31
  8002c62:	d902      	bls.n	8002c6a <SSD1306_DrawLine+0x5e>
 		y1 = SSD1306_HEIGHT - 1;
  8002c64:	003b      	movs	r3, r7
- 8002c66:	223f      	movs	r2, #63	; 0x3f
+ 8002c66:	221f      	movs	r2, #31
  8002c68:	801a      	strh	r2, [r3, #0]
 	}
 	
@@ -8551,7 +8550,7 @@ void SSD1306_DrawFilledRectangle(uint16_t x, uint16_t y, uint16_t w, uint16_t h,
 		x >= SSD1306_WIDTH ||
  8002f58:	1d3b      	adds	r3, r7, #4
  8002f5a:	881b      	ldrh	r3, [r3, #0]
- 8002f5c:	2b3f      	cmp	r3, #63	; 0x3f
+ 8002f5c:	2b1f      	cmp	r3, #31
  8002f5e:	d84c      	bhi.n	8002ffa <SSD1306_DrawFilledRectangle+0xd0>
 		/* Return error */
 		return;
@@ -8580,13 +8579,13 @@ void SSD1306_DrawFilledRectangle(uint16_t x, uint16_t y, uint16_t w, uint16_t h,
  8002f7e:	003b      	movs	r3, r7
  8002f80:	881b      	ldrh	r3, [r3, #0]
  8002f82:	18d3      	adds	r3, r2, r3
- 8002f84:	2b3f      	cmp	r3, #63	; 0x3f
+ 8002f84:	2b1f      	cmp	r3, #31
  8002f86:	dd05      	ble.n	8002f94 <SSD1306_DrawFilledRectangle+0x6a>
 		h = SSD1306_HEIGHT - y;
  8002f88:	003b      	movs	r3, r7
  8002f8a:	1d3a      	adds	r2, r7, #4
  8002f8c:	8812      	ldrh	r2, [r2, #0]
- 8002f8e:	2140      	movs	r1, #64	; 0x40
+ 8002f8e:	2120      	movs	r1, #32
  8002f90:	1a8a      	subs	r2, r1, r2
  8002f92:	801a      	strh	r2, [r3, #0]
 	}

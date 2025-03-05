@@ -39,7 +39,7 @@
 /* Private macro -------------------------------------------------------------*/
 /* USER CODE BEGIN PM */
 /*SSD1306_HEIGHT*/
-#define OLED_HEIGHT (uint8_t) 64
+#define OLED_HEIGHT (uint8_t) 32
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
@@ -145,7 +145,7 @@ void GradualFillScreen(void) {
 	/*Step 2: Expanding filled rectangle from the center*/
 	SSD1306_Clear(); //Clear screen to update
 	for (uint16_t size = 0; size < OLED_HEIGHT ; size += 4) {
-		SSD1306_DrawFilledRectangle(OLED_HEIGHT - size / 2, OLED_HEIGHT/2 - size / 2, size, size,
+		SSD1306_DrawFilledRectangle(64 - size / 2, OLED_HEIGHT/2 - size / 2, size, size,
 				SSD1306_COLOR_WHITE);
 		SSD1306_UpdateScreen();
 		HAL_Delay(50);
@@ -156,7 +156,7 @@ void GradualFillScreen(void) {
 	/*Step 3: Expanding triangle from bottom*/
 	SSD1306_Clear(); //Clear screen to update
 	for (uint16_t height = 0; height < OLED_HEIGHT; height += 4) {
-		SSD1306_DrawTriangle(OLED_HEIGHT, 0, 0, height, 127, height,
+		SSD1306_DrawTriangle(64, 0, 0, height, 127, height,
 				SSD1306_COLOR_WHITE);
 		SSD1306_UpdateScreen();
 		HAL_Delay(50);
@@ -167,7 +167,7 @@ void GradualFillScreen(void) {
 	/*Step 4: Expanding filled circle from center*/
 	SSD1306_Clear();
 	for (uint16_t r = 0; r < OLED_HEIGHT/2; r += 2) {
-		SSD1306_DrawFilledCircle( OLED_HEIGHT, OLED_HEIGHT/2, r, SSD1306_COLOR_WHITE);
+		SSD1306_DrawFilledCircle(64, OLED_HEIGHT/2, r, SSD1306_COLOR_WHITE);
 		SSD1306_UpdateScreen();
 		HAL_Delay(50);
 	}

@@ -3405,7 +3405,7 @@ LOAD c:/st/stm32cubeide_1.9.0/stm32cubeide/plugins/com.st.stm32cube.ide.mcu.exte
  .igot.plt      0x0000000020000014        0x0 c:/st/stm32cubeide_1.9.0/stm32cubeide/plugins/com.st.stm32cube.ide.mcu.externaltools.gnu-tools-for-stm32.10.3-2021.10.win32_1.0.0.202111181127/tools/bin/../lib/gcc/arm-none-eabi/10.3.1/thumb/v6-m/nofp/crtbegin.o
                 0x0000000020000014                . = ALIGN (0x4)
 
-.bss            0x0000000020000014      0x474 load address 0x0000000008006cf8
+.bss            0x0000000020000014      0x274 load address 0x0000000008006cf8
                 0x0000000020000014                _sbss = .
                 0x0000000020000014                __bss_start__ = _sbss
  *(.bss)
@@ -3416,24 +3416,24 @@ LOAD c:/st/stm32cubeide_1.9.0/stm32cubeide/plugins/com.st.stm32cube.ide.mcu.exte
  .bss.uwTick    0x000000002000007c        0x4 ./Drivers/STM32G0xx_HAL_Driver/Src/stm32g0xx_hal.o
                 0x000000002000007c                uwTick
  .bss.SSD1306_Buffer
-                0x0000000020000080      0x400 ./OLED/Src/ssd1306.o
- .bss.SSD1306   0x0000000020000480        0x6 ./OLED/Src/ssd1306.o
+                0x0000000020000080      0x200 ./OLED/Src/ssd1306.o
+ .bss.SSD1306   0x0000000020000280        0x6 ./OLED/Src/ssd1306.o
  *(COMMON)
-                0x0000000020000488                . = ALIGN (0x4)
- *fill*         0x0000000020000486        0x2 
-                0x0000000020000488                _ebss = .
-                0x0000000020000488                __bss_end__ = _ebss
+                0x0000000020000288                . = ALIGN (0x4)
+ *fill*         0x0000000020000286        0x2 
+                0x0000000020000288                _ebss = .
+                0x0000000020000288                __bss_end__ = _ebss
 
 ._user_heap_stack
-                0x0000000020000488      0x600 load address 0x0000000008006cf8
-                0x0000000020000488                . = ALIGN (0x8)
+                0x0000000020000288      0x600 load address 0x0000000008006cf8
+                0x0000000020000288                . = ALIGN (0x8)
                 [!provide]                        PROVIDE (end = .)
-                0x0000000020000488                PROVIDE (_end = .)
-                0x0000000020000688                . = (. + _Min_Heap_Size)
- *fill*         0x0000000020000488      0x200 
-                0x0000000020000a88                . = (. + _Min_Stack_Size)
- *fill*         0x0000000020000688      0x400 
-                0x0000000020000a88                . = ALIGN (0x8)
+                0x0000000020000288                PROVIDE (_end = .)
+                0x0000000020000488                . = (. + _Min_Heap_Size)
+ *fill*         0x0000000020000288      0x200 
+                0x0000000020000888                . = (. + _Min_Stack_Size)
+ *fill*         0x0000000020000488      0x400 
+                0x0000000020000888                . = ALIGN (0x8)
 
 /DISCARD/
  libc.a(*)
