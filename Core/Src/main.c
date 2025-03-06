@@ -22,6 +22,7 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "ssd1306.h"
+#include "mpu6050.h"
 #include "fonts.h"
 #include "horse_anim.h"
 #include "stdio.h"
@@ -46,7 +47,7 @@
 I2C_HandleTypeDef hi2c1;
 
 /* USER CODE BEGIN PV */
-
+MPU6050_t MPU6050;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -93,15 +94,17 @@ int main(void) {
 	MX_I2C1_Init();
 	/* USER CODE BEGIN 2 */
 	 /*Initialise the display*/
-	SSD1306_Init();
-	/*goto 10, 10 coordinate*/
-	SSD1306_GotoXY(0, 10);
-	/*print Hello*/
-	SSD1306_Puts("HELLO STM32", &Font_11x18, 1);
-	SSD1306_UpdateScreen(); // update screen
-	HAL_Delay(2000);
-	/*Run the effect*/
-	GradualFillScreen();
+//	SSD1306_Init();
+//	/*goto 10, 10 coordinate*/
+//	SSD1306_GotoXY(0, 10);
+//	/*print Hello*/
+//	SSD1306_Puts("HELLO STM32", &Font_11x18, 1);
+//	SSD1306_UpdateScreen(); // update screen
+//	HAL_Delay(2000);
+
+	 /*Initialise the Mpu6050
+	  * returned value: 1---> NotOK , 0---> OK*/
+	 while (MPU6050_Init(&hi2c1) == 1);
 	/* USER CODE END 2 */
 
 	/* Infinite loop */
@@ -110,9 +113,10 @@ int main(void) {
 		/* USER CODE END WHILE */
 
 		/* USER CODE BEGIN 3 */
+		/*Read all value from Mpu6050*/
+		 MPU6050_Read_All(&hi2c1, &MPU6050);
+			  HAL_Delay (100);
 
-		/*Run horse animation*/
-		HorseAnimation();
 	}
 	/* USER CODE END 3 */
 }

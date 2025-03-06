@@ -24,5 +24,6 @@ SUBDIRS := \
 Core/Src \
 Core/Startup \
 Drivers/STM32G0xx_HAL_Driver/Src \
+MPU6050/Src \
 OLED/Src \
 

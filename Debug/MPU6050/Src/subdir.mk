@@ -5,26 +5,23 @@
 
 # Add inputs and outputs from these tool invocations to the build variables 
 C_SRCS += \
-../OLED/Src/fonts.c \
-../OLED/Src/ssd1306.c 
+../MPU6050/Src/mpu6050.c 
 
 OBJS += \
-./OLED/Src/fonts.o \
-./OLED/Src/ssd1306.o 
+./MPU6050/Src/mpu6050.o 
 
 C_DEPS += \
-./OLED/Src/fonts.d \
-./OLED/Src/ssd1306.d 
+./MPU6050/Src/mpu6050.d 
 
 
 # Each subdirectory must supply rules for building sources it contributes
-OLED/Src/%.o OLED/Src/%.su: ../OLED/Src/%.c OLED/Src/subdir.mk
+MPU6050/Src/%.o MPU6050/Src/%.su: ../MPU6050/Src/%.c MPU6050/Src/subdir.mk
 	arm-none-eabi-gcc "$<" -mcpu=cortex-m0plus -std=gnu11 -g3 -DDEBUG -DUSE_HAL_DRIVER -DSTM32G0B1xx -c -I../Core/Inc -I"D:/HEXABITZ_COURSE/RepoProjectsCourseEmbeddedSystems/MPU6050/Inc" -I"D:/HEXABITZ_COURSE/RepoProjectsCourseEmbeddedSystems/OLED/Inc" -I../Drivers/STM32G0xx_HAL_Driver/Inc -I../Drivers/STM32G0xx_HAL_Driver/Inc/Legacy -I../Drivers/CMSIS/Device/ST/STM32G0xx/Include -I../Drivers/CMSIS/Include -O0 -ffunction-sections -fdata-sections -Wall -fstack-usage -MMD -MP -MF"$(@:%.o=%.d)" -MT"$@" --specs=nano.specs -mfloat-abi=soft -mthumb -o "$@"
 
-clean: clean-OLED-2f-Src
+clean: clean-MPU6050-2f-Src
 
-clean-OLED-2f-Src:
-	-$(RM) ./OLED/Src/fonts.d ./OLED/Src/fonts.o ./OLED/Src/fonts.su ./OLED/Src/ssd1306.d ./OLED/Src/ssd1306.o ./OLED/Src/ssd1306.su
+clean-MPU6050-2f-Src:
+	-$(RM) ./MPU6050/Src/mpu6050.d ./MPU6050/Src/mpu6050.o ./MPU6050/Src/mpu6050.su
 
-.PHONY: clean-OLED-2f-Src
+.PHONY: clean-MPU6050-2f-Src
 
