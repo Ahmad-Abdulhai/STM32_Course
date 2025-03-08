@@ -26,6 +26,7 @@
 #include "fonts.h"
 #include "horse_anim.h"
 #include "stdio.h"
+#include "math.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -41,13 +42,22 @@
 /* USER CODE BEGIN PM */
 /*SSD1306_HEIGHT*/
 #define OLED_HEIGHT (uint8_t) 32
+#define SCREEN_WIDTH  128  // OLED width
+#define SCREEN_HEIGHT 64   // OLED height
+#define CIRCLE_RADIUS 10    // Circle size
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
 I2C_HandleTypeDef hi2c1;
 
 /* USER CODE BEGIN PV */
-MPU6050_t MPU6050;
+MPU6050_t mpu;
+/*Kalman filter instances for X and Y*/
+Kalman_t kalmanX, kalmanY;
+/*Circle position*/
+float x_pos = SCREEN_WIDTH / 2;
+float y_pos = SCREEN_HEIGHT / 2;
+
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -56,7 +66,7 @@ static void MX_GPIO_Init(void);
 static void MX_I2C1_Init(void);
 /* USER CODE BEGIN PFP */
 void GradualFillScreen(void);
-void HorseAnimation(void);
+void DrawMovingCircle(void);
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -93,18 +103,31 @@ int main(void) {
 	MX_GPIO_Init();
 	MX_I2C1_Init();
 	/* USER CODE BEGIN 2 */
-	 /*Initialise the display*/
-//	SSD1306_Init();
-//	/*goto 10, 10 coordinate*/
-//	SSD1306_GotoXY(0, 10);
-//	/*print Hello*/
-//	SSD1306_Puts("HELLO STM32", &Font_11x18, 1);
-//	SSD1306_UpdateScreen(); // update screen
-//	HAL_Delay(2000);
+	/*Initialise the display*/
+	SSD1306_Init();
+	/*Initialise the Mpu6050
+	 * returned value: 1---> NotOK , 0---> OK*/
+	MPU6050_Init(&hi2c1);
+	/*Initialize Kalman filter parameters*/
+	kalmanX.angle = 0;
+	kalmanX.bias = 0;
+	kalmanX.P[0][0] = 1;
+	kalmanX.P[0][1] = 0;
+	kalmanX.P[1][0] = 0;
+	kalmanX.P[1][1] = 1;
+	kalmanX.Q_angle = 0.001;
+	kalmanX.Q_bias = 0.003;
+	kalmanX.R_measure = 0.03;
 
-	 /*Initialise the Mpu6050
-	  * returned value: 1---> NotOK , 0---> OK*/
-	 while (MPU6050_Init(&hi2c1) == 1);
+	kalmanY.angle = 0;
+	kalmanY.bias = 0;
+	kalmanY.P[0][0] = 1;
+	kalmanY.P[0][1] = 0;
+	kalmanY.P[1][0] = 0;
+	kalmanY.P[1][1] = 1;
+	kalmanY.Q_angle = 0.001;
+	kalmanY.Q_bias = 0.003;
+	kalmanY.R_measure = 0.03;
 	/* USER CODE END 2 */
 
 	/* Infinite loop */
@@ -113,9 +136,10 @@ int main(void) {
 		/* USER CODE END WHILE */
 
 		/* USER CODE BEGIN 3 */
-		/*Read all value from Mpu6050*/
-		 MPU6050_Read_All(&hi2c1, &MPU6050);
-			  HAL_Delay (100);
+		/*Update the circle position*/
+		DrawMovingCircle();
+	    /*Small delay for smooth animation*/
+		HAL_Delay(5);
 
 	}
 	/* USER CODE END 3 */
@@ -137,7 +161,7 @@ void GradualFillScreen(void) {
 	HAL_Delay(500);
 
 	/*Step 1: Draw horizontal lines from top to bottom*/
-	for (uint16_t y = 0; y < OLED_HEIGHT; y += 4) {
+	for (uint16_t y = 0; y < OLED_HEIGHT ; y += 4) {
 		SSD1306_DrawLine(0, y, 127, y, SSD1306_COLOR_WHITE);
 		SSD1306_UpdateScreen();
 		/* Small delay to see the effect*/
@@ -149,8 +173,8 @@ void GradualFillScreen(void) {
 	/*Step 2: Expanding filled rectangle from the center*/
 	SSD1306_Clear(); //Clear screen to update
 	for (uint16_t size = 0; size < OLED_HEIGHT ; size += 4) {
-		SSD1306_DrawFilledRectangle(64 - size / 2, OLED_HEIGHT/2 - size / 2, size, size,
-				SSD1306_COLOR_WHITE);
+		SSD1306_DrawFilledRectangle(64 - size / 2, OLED_HEIGHT / 2 - size / 2,
+				size, size, SSD1306_COLOR_WHITE);
 		SSD1306_UpdateScreen();
 		HAL_Delay(50);
 	}
@@ -159,7 +183,7 @@ void GradualFillScreen(void) {
 
 	/*Step 3: Expanding triangle from bottom*/
 	SSD1306_Clear(); //Clear screen to update
-	for (uint16_t height = 0; height < OLED_HEIGHT; height += 4) {
+	for (uint16_t height = 0; height < OLED_HEIGHT ; height += 4) {
 		SSD1306_DrawTriangle(64, 0, 0, height, 127, height,
 				SSD1306_COLOR_WHITE);
 		SSD1306_UpdateScreen();
@@ -170,8 +194,8 @@ void GradualFillScreen(void) {
 
 	/*Step 4: Expanding filled circle from center*/
 	SSD1306_Clear();
-	for (uint16_t r = 0; r < OLED_HEIGHT/2; r += 2) {
-		SSD1306_DrawFilledCircle(64, OLED_HEIGHT/2, r, SSD1306_COLOR_WHITE);
+	for (uint16_t r = 0; r < OLED_HEIGHT / 2; r += 2) {
+		SSD1306_DrawFilledCircle(64, OLED_HEIGHT / 2, r, SSD1306_COLOR_WHITE);
 		SSD1306_UpdateScreen();
 		HAL_Delay(50);
 	}
@@ -189,66 +213,7 @@ void GradualFillScreen(void) {
 	SSD1306_Stopscroll();
 	HAL_Delay(100); // Final pause before clearing the screen
 }
-/**
- * @brief Displays a horse running animation on the SSD1306 OLED.
- *
- * This function sequentially displays 10 different horse bitmaps
- * (horse1 to horse10) to create a smooth running animation.
- * Each frame is displayed briefly before clearing the screen and updating it.
- *
- * Steps:
- * 1. Clears the display.
- * 2. Draws the horse frame from the bitmap array.
- * 3. Updates the OLED to show the frame.
- * 4. Repeats for all frames in sequence.
- *
- * Note: Ensure `horse1` to `horse10` bitmaps are correctly defined in the code.
- */
-void HorseAnimation(void) {
-	//// HORSE ANIMATION START //////
 
-	SSD1306_Clear();
-	SSD1306_DrawBitmap(0, 0, horse1, 128, 64, 1);
-	SSD1306_UpdateScreen();
-
-	SSD1306_Clear();
-	SSD1306_DrawBitmap(0, 0, horse2, 128, 64, 1);
-	SSD1306_UpdateScreen();
-
-	SSD1306_Clear();
-	SSD1306_DrawBitmap(0, 0, horse3, 128, 64, 1);
-	SSD1306_UpdateScreen();
-
-	SSD1306_Clear();
-	SSD1306_DrawBitmap(0, 0, horse4, 128, 64, 1);
-	SSD1306_UpdateScreen();
-
-	SSD1306_Clear();
-	SSD1306_DrawBitmap(0, 0, horse5, 128, 64, 1);
-	SSD1306_UpdateScreen();
-
-	SSD1306_Clear();
-	SSD1306_DrawBitmap(0, 0, horse6, 128, 64, 1);
-	SSD1306_UpdateScreen();
-
-	SSD1306_Clear();
-	SSD1306_DrawBitmap(0, 0, horse7, 128, 64, 1);
-	SSD1306_UpdateScreen();
-
-	SSD1306_Clear();
-	SSD1306_DrawBitmap(0, 0, horse8, 128, 64, 1);
-	SSD1306_UpdateScreen();
-
-	SSD1306_Clear();
-	SSD1306_DrawBitmap(0, 0, horse9, 128, 64, 1);
-	SSD1306_UpdateScreen();
-
-	SSD1306_Clear();
-	SSD1306_DrawBitmap(0, 0, horse10, 128, 64, 1);
-	SSD1306_UpdateScreen();
-
-	//// HORSE ANIMATION ENDS //////
-}
 /**
  * @brief System Clock Configuration
  * @retval None
@@ -344,6 +309,47 @@ static void MX_GPIO_Init(void) {
 }
 
 /* USER CODE BEGIN 4 */
+/**
+ * @brief Reads MPU6050 values and moves the circle on the OLED screen.
+ */
+void DrawMovingCircle(void) {
+	static uint32_t last_time = 0;
+	uint32_t current_time = HAL_GetTick();
+	double dt = (current_time - last_time) / 1000.0; // Convert ms to seconds
+	last_time = current_time;
+	/*Read IMU data*/
+	MPU6050_Read_All(&hi2c1, &mpu);
+
+	/*Compute tilt angles using accelerometer data*/
+	double accelAngleX = atan2(mpu.Ay, mpu.Az) * 180 / M_PI;
+	double accelAngleY = atan2(-mpu.Ax, sqrt(mpu.Ay * mpu.Ay + mpu.Az * mpu.Az))
+			* 180 / M_PI;
+
+	/*Apply Kalman filter for smooth angle estimation*/
+	double filteredAngleX = Kalman_getAngle(&kalmanX, accelAngleX, mpu.Gx, dt);
+	double filteredAngleY = Kalman_getAngle(&kalmanY, accelAngleY, mpu.Gy, dt);
+	/*FIX: Invert Y-axis direction by multiplying by -1*/
+	filteredAngleY *= -1;
+	/*Map angles to screen coordinates (scaling factor adjusted for smooth movement)*/
+	x_pos = SCREEN_WIDTH / 2 + (filteredAngleX * 1.5f);
+	y_pos = SCREEN_HEIGHT / 2 + (filteredAngleY * 1.5f);
+
+	/*Ensure circle stays within OLED bounds*/
+	if (x_pos < CIRCLE_RADIUS)
+		x_pos = CIRCLE_RADIUS;
+	if (x_pos > SCREEN_WIDTH - CIRCLE_RADIUS)
+		x_pos = SCREEN_WIDTH - CIRCLE_RADIUS;
+	if (y_pos < CIRCLE_RADIUS)
+		y_pos = CIRCLE_RADIUS;
+	if (y_pos > SCREEN_HEIGHT - CIRCLE_RADIUS)
+		y_pos = SCREEN_HEIGHT - CIRCLE_RADIUS;
+
+	// Clear screen and draw updated circle
+	SSD1306_Clear();
+	SSD1306_DrawFilledCircle((int) x_pos, (int) y_pos, CIRCLE_RADIUS,
+			SSD1306_COLOR_WHITE);
+	SSD1306_UpdateScreen();
+}
 
 /* USER CODE END 4 */
 
