@@ -36,7 +36,31 @@ extern "C" {
 
 /* Exported types ------------------------------------------------------------*/
 /* USER CODE BEGIN ET */
+/*Data buffer transmission/reception between two boards via SPI using Interrupt mode.
 
+Board: NUCLEO-G071RB (embeds a STM32G071RB device)
+CLK Pin: PA1
+MISO Pin: PA6
+MOSI Pin: PA2
+NSS Pin: PA4
+   _________________________                       __________________________
+  |           ______________|                      |______________           |
+  |          |SPI1          |                      |          SPI1|          |
+  |          |              |                      |              |          |
+  |          |    CLK(PA.01)|______________________|CLK(PA.01)    |          |
+  |          |              |                      |              |          |
+  |          |   MISO(PA.06)|______________________|MISO(PA.06)   |          |
+  |          |              |                      |              |          |
+  |          |   MOSI(PA.02)|______________________|MOSI(PA.02)   |          |
+  |          |              |                      |              |          |
+  |          |    NSS(PA.04)|                      |NSS(PA.04)    |          |
+  |          |______________|                      |______________|                      |
+  |                         |                      |                         |
+  |                         |                      |                         |
+  |                      GND|______________________|GND                      |
+  |                         |                      |                         |
+  |_STM32G0xx Master________|                      |_STM32G0xx Slave_________|
+*/
 /* USER CODE END ET */
 
 /* Exported constants --------------------------------------------------------*/
