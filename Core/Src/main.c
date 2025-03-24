@@ -22,7 +22,8 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include<stdio.h>
+#include<string.h>
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -44,8 +45,10 @@ UART_HandleTypeDef huart2;
 
 osThreadId defaultTaskHandle;
 osThreadId Task2Handle;
-osThreadId Task3Handle;
 /* USER CODE BEGIN PV */
+uint8_t dataDefTask[20];
+char dataTask2[25];
+uint32_t indx = 0;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -54,7 +57,6 @@ static void MX_GPIO_Init(void);
 static void MX_USART2_UART_Init(void);
 void StartDefaultTask(void const *argument);
 void Task2_Init(void const *argument);
-void Task3_Init(void const *argument);
 
 /* USER CODE BEGIN PFP */
 
@@ -62,28 +64,7 @@ void Task3_Init(void const *argument);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-/**
- * @brief Transmits a predefined message for the default task over UART.
- */
-void transmit_def(void) {
-	uint8_t data[] = "\rHello DEFTASK\n";
-	HAL_UART_Transmit(&huart2, data, sizeof(data), 100);
-}
-/**
- * @brief Transmits a predefined message for Task2 over UART.
- */
-void transmit_task2(void) {
-	uint8_t data[] = "\rHello TASK2\n";
-	HAL_UART_Transmit(&huart2, data, sizeof(data), 100);
-}
-/**
- * @brief Transmits a predefined message for Task3 over UART.
- */
-void transmit_task3(void) {
-	uint8_t data[] = "\rHello TASK3\n";
-	HAL_UART_Transmit(&huart2, data, sizeof(data), 100);
 
-}
 /* USER CODE END 0 */
 
 /**
@@ -136,16 +117,12 @@ int main(void) {
 
 	/* Create the thread(s) */
 	/* definition and creation of defaultTask */
-	osThreadDef(defaultTask, StartDefaultTask, osPriorityAboveNormal, 0, 128);
+	osThreadDef(defaultTask, StartDefaultTask, osPriorityNormal, 0, 128);
 	defaultTaskHandle = osThreadCreate(osThread(defaultTask), NULL);
 
 	/* definition and creation of Task2 */
-	osThreadDef(Task2, Task2_Init, osPriorityBelowNormal, 0, 128);
+	osThreadDef(Task2, Task2_Init, osPriorityAboveNormal, 0, 128);
 	Task2Handle = osThreadCreate(osThread(Task2), NULL);
-
-	/* definition and creation of Task3 */
-	osThreadDef(Task3, Task3_Init, osPriorityNormal, 0, 128);
-	Task3Handle = osThreadCreate(osThread(Task3), NULL);
 
 	/* USER CODE BEGIN RTOS_THREADS */
 	/* add threads, ... */
@@ -294,7 +271,8 @@ void StartDefaultTask(void const *argument) {
 		/*Toggles PA0 */
 		HAL_GPIO_TogglePin(GPIOA, GPIO_PIN_0);
 		/*Transmit data via UART2 */
-		transmit_def();
+		sprintf((char*) dataDefTask, "\rHello DEFTASK\n");
+		HAL_UART_Transmit(&huart2, dataDefTask, sizeof(dataDefTask), 100);
 		/*FreeRTOS delay*/
 		osDelay(1000);
 	}
@@ -315,30 +293,35 @@ void Task2_Init(void const *argument) {
 		/*Toggles PA0 */
 		HAL_GPIO_TogglePin(GPIOA, GPIO_PIN_1);
 		/*Transmit data via UART2 */
-		transmit_task2();
+		sprintf(dataTask2, "\rtask2, indx = %lu\n", indx++);
+		HAL_UART_Transmit(&huart2, (uint8_t*) dataTask2, strlen(dataTask2),100);
+		/*Suspend default task*/
+		if (indx == 4) {
+			sprintf(dataTask2, "\rSuspending DefaultTask\n");
+			HAL_UART_Transmit(&huart2, (uint8_t*) dataTask2, strlen(dataTask2),100);
+			osThreadSuspend(defaultTaskHandle);
+		}
+        /*Resume default task*/
+		if (indx == 7) {
+			sprintf(dataTask2, "\rResuming DefaultTask\n");
+			HAL_UART_Transmit(&huart2, (uint8_t*) dataTask2, strlen(dataTask2),100);
+			osThreadResume(defaultTaskHandle);
+		}
+       /*terminate default task*/
+//		if (indx == 3){
+//			sprintf (dataTask2,"\rTerminating DefaultTask\n");
+//			HAL_UART_Transmit(&huart2, (uint8_t*)dataTask2, strlen(dataTask2), 100);
+//		   osThreadTerminate(defaultTaskHandle);
+//		}
+
+//		if (indx == 5){
+//			uint32_t PreviousWakeTime = osKernelSysTick();
+//			osDelayUntil(&PreviousWakeTime, 3000);  // 3 sec inactive
+//		}
 		/*FreeRTOS delay*/
-		osDelay(1000);
+		osDelay(2000);
 	}
 	/* USER CODE END Task2_Init */
-}
-
-/* USER CODE BEGIN Header_Task3_Init */
-/**
- * @brief Function implementing the Task3 thread.
- * @param argument: Not used
- * @retval None
- */
-/* USER CODE END Header_Task3_Init */
-void Task3_Init(void const *argument) {
-	/* USER CODE BEGIN Task3_Init */
-	/* Infinite loop */
-	for (;;) {
-		/*Transmit data via UART2 */
-		transmit_task3();
-		/*FreeRTOS delay*/
-		osDelay(1000);
-	}
-	/* USER CODE END Task3_Init */
 }
 
 /**
