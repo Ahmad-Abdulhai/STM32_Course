@@ -43,11 +43,10 @@
 /* Private variables ---------------------------------------------------------*/
  UART_HandleTypeDef huart2;
 
-osThreadId Task1_LEDHandle;
-osThreadId Task2_ButtonHandle;
+osThreadId defTaskHandle;
+osTimerId OneShotTimerHandle;
+osTimerId PeriodicTimerHandle;
 /* USER CODE BEGIN PV */
-uint8_t dataDefTask[20];
-char dataTask2[25];
 uint32_t indx = 0;
 /* USER CODE END PV */
 
@@ -55,8 +54,9 @@ uint32_t indx = 0;
 void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
 static void MX_USART2_UART_Init(void);
-void StartTask1_LED(void const * argument);
-void Start_Task2_Button(void const * argument);
+void defTaskStart(void const * argument);
+void OneShotTimerCallback(void const * argument);
+void PeriodicTimerCallback(void const * argument);
 
 /* USER CODE BEGIN PFP */
 /*To make printf() work over UART in STM32, we override(Redirected to UART)*/
@@ -64,6 +64,7 @@ int _write(int file, char *ptr, int len) {
     HAL_UART_Transmit(&huart2, (uint8_t*)ptr, len, 100);
     return len;
 }
+/*One-Shot Timer Callback (Executes Once)*/
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -112,8 +113,25 @@ int main(void)
 	/* add semaphores, ... */
   /* USER CODE END RTOS_SEMAPHORES */
 
+  /* Create the timer(s) */
+  /* definition and creation of OneShotTimer */
+  osTimerDef(OneShotTimer, OneShotTimerCallback);
+  OneShotTimerHandle = osTimerCreate(osTimer(OneShotTimer), osTimerOnce, NULL);
+
+  /* definition and creation of PeriodicTimer */
+  osTimerDef(PeriodicTimer, PeriodicTimerCallback);
+  PeriodicTimerHandle = osTimerCreate(osTimer(PeriodicTimer), osTimerPeriodic, NULL);
+
   /* USER CODE BEGIN RTOS_TIMERS */
 	/* start timers, add new ones, ... */
+  // Start the Timers
+     if (OneShotTimerHandle != NULL) {
+         osTimerStart(OneShotTimerHandle, 2000);  // 2000ms = 2s
+     }
+
+     if (PeriodicTimerHandle != NULL) {
+         osTimerStart(PeriodicTimerHandle, 500);  // 500ms
+     }
   /* USER CODE END RTOS_TIMERS */
 
   /* USER CODE BEGIN RTOS_QUEUES */
@@ -121,13 +139,9 @@ int main(void)
   /* USER CODE END RTOS_QUEUES */
 
   /* Create the thread(s) */
-  /* definition and creation of Task1_LED */
-  osThreadDef(Task1_LED, StartTask1_LED, osPriorityHigh, 0, 128);
-  Task1_LEDHandle = osThreadCreate(osThread(Task1_LED), NULL);
-
-  /* definition and creation of Task2_Button */
-  osThreadDef(Task2_Button, Start_Task2_Button, osPriorityNormal, 0, 128);
-  Task2_ButtonHandle = osThreadCreate(osThread(Task2_Button), NULL);
+  /* definition and creation of defTask */
+  osThreadDef(defTask, defTaskStart, osPriorityNormal, 0, 128);
+  defTaskHandle = osThreadCreate(osThread(defTask), NULL);
 
   /* USER CODE BEGIN RTOS_THREADS */
 	/* add threads, ... */
@@ -277,56 +291,39 @@ static void MX_GPIO_Init(void)
 
 /* USER CODE END 4 */
 
-/* USER CODE BEGIN Header_StartTask1_LED */
+/* USER CODE BEGIN Header_defTaskStart */
 /**
-  * @brief  Function implementing the Task1_LED thread.
+  * @brief  Function implementing the defTask thread.
   * @param  argument: Not used
   * @retval None
   */
-/* USER CODE END Header_StartTask1_LED */
-void StartTask1_LED(void const * argument)
+/* USER CODE END Header_defTaskStart */
+void defTaskStart(void const * argument)
 {
-	/* USER CODE BEGIN 5 */
+  /* USER CODE BEGIN 5 */
 	/* Infinite loop */
 	for (;;) {
-		/*Wait for notification from Task2*/
-		ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
-		/*Toggle LED on PC13*/
-		HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_13);
-		printf("\rTask1: LED Toggled!\n");
+//		 printf("\rdefTask!\n");
+	     osDelay(1);
 	}
-	/* USER CODE END 5 */
+  /* USER CODE END 5 */
 }
 
-/* USER CODE BEGIN Header_Start_Task2_Button */
-/**
-* @brief Function implementing the Task2_Button thread.
-* @param argument: Not used
-* @retval None
-*/
-/* USER CODE END Header_Start_Task2_Button */
-void Start_Task2_Button(void const * argument)
+/* OneShotTimerCallback function */
+void OneShotTimerCallback(void const * argument)
 {
-  /* USER CODE BEGIN Start_Task2_Button */
-  /* Infinite loop */
-  for(;;)
-  {
-	     /*Read Button State (PA0)*/
-	        if (HAL_GPIO_ReadPin(GPIOA, GPIO_PIN_0) == GPIO_PIN_RESET) {
-	            /*Send Notification to Task1 (LED Toggle)*/
-	            xTaskNotifyGive(Task1_LEDHandle);
-	            printf("\rTask2: Button Pressed, Notifying Task1...\n");
+  /* USER CODE BEGIN OneShotTimerCallback */
+	 printf("\rOne-Shot Timer Expired!\n");
+  /* USER CODE END OneShotTimerCallback */
+}
 
-	            // Debounce Delay
-//	            vTaskDelay(pdMS_TO_TICKS(300));
-	        }
-	        /*Send Task Status via UART*/
-	            printf("\rTask2: Monitoring Button...\n");
-
-	            /*Wait 500ms before next check*/
-	            osDelay(1000);
-  }
-  /* USER CODE END Start_Task2_Button */
+/* PeriodicTimerCallback function */
+void PeriodicTimerCallback(void const * argument)
+{
+  /* USER CODE BEGIN PeriodicTimerCallback */
+    printf("\rPeriodic Timer Expired! Blinking LED...\n");
+    HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_13);  // Toggle LED on PC13
+  /* USER CODE END PeriodicTimerCallback */
 }
 
 /**

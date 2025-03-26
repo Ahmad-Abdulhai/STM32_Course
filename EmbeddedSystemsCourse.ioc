@@ -1,9 +1,14 @@
 #MicroXplorer Configuration settings - do not modify
 FREERTOS.FootprintOK=true
-FREERTOS.IPParameters=Tasks01,configUSE_NEWLIB_REENTRANT,FootprintOK
-FREERTOS.Tasks01=Task1_LED,2,128,StartTask1_LED,Default,NULL,Dynamic,NULL,NULL;Task2_Button,0,128,Start_Task2_Button,Default,NULL,Dynamic,NULL,NULL
+FREERTOS.IPParameters=Tasks01,configUSE_NEWLIB_REENTRANT,FootprintOK,configUSE_TIMERS,configTIMER_QUEUE_LENGTH,configTOTAL_HEAP_SIZE,Timers01
+FREERTOS.Tasks01=defTask,0,128,defTaskStart,Default,NULL,Dynamic,NULL,NULL
+FREERTOS.Timers01=OneShotTimer,OneShotTimerCallback,osTimerOnce,Default,NULL,Dynamic,NULL;PeriodicTimer,PeriodicTimerCallback,osTimerPeriodic,Default,NULL,Dynamic,NULL
+FREERTOS.configTIMER_QUEUE_LENGTH=5
+FREERTOS.configTOTAL_HEAP_SIZE=5120
 FREERTOS.configUSE_NEWLIB_REENTRANT=1
+FREERTOS.configUSE_TIMERS=1
 File.Version=6
+GPIO.groupedBy=Group By Peripherals
 KeepUserPlacement=false
 Mcu.CPN=STM32G0B1CEU6
 Mcu.Family=STM32G0
