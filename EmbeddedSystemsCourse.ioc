@@ -1,8 +1,8 @@
 #MicroXplorer Configuration settings - do not modify
+FREERTOS.BinarySemaphores01=BinarySem,Dynamic,NULL
 FREERTOS.FootprintOK=true
-FREERTOS.IPParameters=Tasks01,configUSE_NEWLIB_REENTRANT,FootprintOK,configUSE_TIMERS,configTIMER_QUEUE_LENGTH,configTOTAL_HEAP_SIZE,Timers01
-FREERTOS.Tasks01=defTask,0,128,defTaskStart,Default,NULL,Dynamic,NULL,NULL
-FREERTOS.Timers01=OneShotTimer,OneShotTimerCallback,osTimerOnce,Default,NULL,Dynamic,NULL;PeriodicTimer,PeriodicTimerCallback,osTimerPeriodic,Default,NULL,Dynamic,NULL
+FREERTOS.IPParameters=Tasks01,configUSE_NEWLIB_REENTRANT,FootprintOK,configUSE_TIMERS,configTIMER_QUEUE_LENGTH,configTOTAL_HEAP_SIZE,BinarySemaphores01
+FREERTOS.Tasks01=NormalTask,0,128,StartNormalTask,Default,NULL,Dynamic,NULL,NULL;HighTask,1,128,StartHighTask,Default,NULL,Dynamic,NULL,NULL;LowTask,-1,128,StartLowTask,Default,NULL,Dynamic,NULL,NULL
 FREERTOS.configTIMER_QUEUE_LENGTH=5
 FREERTOS.configTOTAL_HEAP_SIZE=5120
 FREERTOS.configUSE_NEWLIB_REENTRANT=1
@@ -47,7 +47,7 @@ NVIC.TimeBase=TIM6_DAC_LPTIM1_IRQn
 NVIC.TimeBaseIP=TIM6
 NVIC.USART2_LPUART2_IRQn=true\:3\:0\:false\:false\:true\:true\:true\:true\:true
 PA0.GPIOParameters=GPIO_PuPd
-PA0.GPIO_PuPd=GPIO_PULLUP
+PA0.GPIO_PuPd=GPIO_PULLDOWN
 PA0.Locked=true
 PA0.Signal=GPIO_Input
 PA2.Mode=Asynchronous

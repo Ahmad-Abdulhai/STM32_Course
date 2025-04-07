@@ -43,9 +43,10 @@
 /* Private variables ---------------------------------------------------------*/
  UART_HandleTypeDef huart2;
 
-osThreadId defTaskHandle;
-osTimerId OneShotTimerHandle;
-osTimerId PeriodicTimerHandle;
+osThreadId NormalTaskHandle;
+osThreadId HighTaskHandle;
+osThreadId LowTaskHandle;
+osSemaphoreId BinarySemHandle;
 /* USER CODE BEGIN PV */
 uint32_t indx = 0;
 /* USER CODE END PV */
@@ -54,9 +55,9 @@ uint32_t indx = 0;
 void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
 static void MX_USART2_UART_Init(void);
-void defTaskStart(void const * argument);
-void OneShotTimerCallback(void const * argument);
-void PeriodicTimerCallback(void const * argument);
+void StartNormalTask(void const * argument);
+void StartHighTask(void const * argument);
+void StartLowTask(void const * argument);
 
 /* USER CODE BEGIN PFP */
 /*To make printf() work over UART in STM32, we override(Redirected to UART)*/
@@ -109,29 +110,17 @@ int main(void)
 	/* add mutexes, ... */
   /* USER CODE END RTOS_MUTEX */
 
+  /* Create the semaphores(s) */
+  /* definition and creation of BinarySem */
+  osSemaphoreDef(BinarySem);
+  BinarySemHandle = osSemaphoreCreate(osSemaphore(BinarySem), 1);
+
   /* USER CODE BEGIN RTOS_SEMAPHORES */
 	/* add semaphores, ... */
   /* USER CODE END RTOS_SEMAPHORES */
 
-  /* Create the timer(s) */
-  /* definition and creation of OneShotTimer */
-  osTimerDef(OneShotTimer, OneShotTimerCallback);
-  OneShotTimerHandle = osTimerCreate(osTimer(OneShotTimer), osTimerOnce, NULL);
-
-  /* definition and creation of PeriodicTimer */
-  osTimerDef(PeriodicTimer, PeriodicTimerCallback);
-  PeriodicTimerHandle = osTimerCreate(osTimer(PeriodicTimer), osTimerPeriodic, NULL);
-
   /* USER CODE BEGIN RTOS_TIMERS */
 	/* start timers, add new ones, ... */
-  // Start the Timers
-     if (OneShotTimerHandle != NULL) {
-         osTimerStart(OneShotTimerHandle, 2000);  // 2000ms = 2s
-     }
-
-     if (PeriodicTimerHandle != NULL) {
-         osTimerStart(PeriodicTimerHandle, 500);  // 500ms
-     }
   /* USER CODE END RTOS_TIMERS */
 
   /* USER CODE BEGIN RTOS_QUEUES */
@@ -139,9 +128,17 @@ int main(void)
   /* USER CODE END RTOS_QUEUES */
 
   /* Create the thread(s) */
-  /* definition and creation of defTask */
-  osThreadDef(defTask, defTaskStart, osPriorityNormal, 0, 128);
-  defTaskHandle = osThreadCreate(osThread(defTask), NULL);
+  /* definition and creation of NormalTask */
+  osThreadDef(NormalTask, StartNormalTask, osPriorityNormal, 0, 128);
+  NormalTaskHandle = osThreadCreate(osThread(NormalTask), NULL);
+
+  /* definition and creation of HighTask */
+  osThreadDef(HighTask, StartHighTask, osPriorityAboveNormal, 0, 128);
+  HighTaskHandle = osThreadCreate(osThread(HighTask), NULL);
+
+  /* definition and creation of LowTask */
+  osThreadDef(LowTask, StartLowTask, osPriorityBelowNormal, 0, 128);
+  LowTaskHandle = osThreadCreate(osThread(LowTask), NULL);
 
   /* USER CODE BEGIN RTOS_THREADS */
 	/* add threads, ... */
@@ -282,7 +279,7 @@ static void MX_GPIO_Init(void)
   /*Configure GPIO pin : PA0 */
   GPIO_InitStruct.Pin = GPIO_PIN_0;
   GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
-  GPIO_InitStruct.Pull = GPIO_PULLUP;
+  GPIO_InitStruct.Pull = GPIO_PULLDOWN;
   HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
 }
@@ -291,39 +288,83 @@ static void MX_GPIO_Init(void)
 
 /* USER CODE END 4 */
 
-/* USER CODE BEGIN Header_defTaskStart */
+/* USER CODE BEGIN Header_StartNormalTask */
 /**
-  * @brief  Function implementing the defTask thread.
+  * @brief  Function implementing the NormalTask thread.
   * @param  argument: Not used
   * @retval None
   */
-/* USER CODE END Header_defTaskStart */
-void defTaskStart(void const * argument)
+/* USER CODE END Header_StartNormalTask */
+void StartNormalTask(void const * argument)
 {
   /* USER CODE BEGIN 5 */
 	/* Infinite loop */
 	for (;;) {
-//		 printf("\rdefTask!\n");
-	     osDelay(1);
+		 printf("\r\nEntered MediumTask\n");
+//			while (HAL_GPIO_ReadPin(GPIOA, GPIO_PIN_0)){
+//					HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_13);
+//				}
+		 printf("\rLeaving MediumTask\n\n");
+	     osDelay(2000);
 	}
   /* USER CODE END 5 */
 }
 
-/* OneShotTimerCallback function */
-void OneShotTimerCallback(void const * argument)
+/* USER CODE BEGIN Header_StartHighTask */
+/**
+* @brief Function implementing the HighTask thread.
+* @param argument: Not used
+* @retval None
+*/
+/* USER CODE END Header_StartHighTask */
+void StartHighTask(void const * argument)
 {
-  /* USER CODE BEGIN OneShotTimerCallback */
-	 printf("\rOne-Shot Timer Expired!\n");
-  /* USER CODE END OneShotTimerCallback */
+  /* USER CODE BEGIN StartHighTask */
+  /* Infinite loop */
+  for(;;)
+  {
+		printf ("\r\nEntered HighTask and waiting for Semaphore\n");
+
+		osSemaphoreWait(BinarySemHandle, osWaitForever);
+
+		printf("\rSemaphore acquired by HIGH Task\n");
+
+		printf("\rLeaving HighTask and releasing Semaphore\n");
+
+		osSemaphoreRelease(BinarySemHandle);
+	    osDelay(2000);
+  }
+  /* USER CODE END StartHighTask */
 }
 
-/* PeriodicTimerCallback function */
-void PeriodicTimerCallback(void const * argument)
+/* USER CODE BEGIN Header_StartLowTask */
+/**
+* @brief Function implementing the LowTask thread.
+* @param argument: Not used
+* @retval None
+*/
+/* USER CODE END Header_StartLowTask */
+void StartLowTask(void const * argument)
 {
-  /* USER CODE BEGIN PeriodicTimerCallback */
-    printf("\rPeriodic Timer Expired! Blinking LED...\n");
-    HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_13);  // Toggle LED on PC13
-  /* USER CODE END PeriodicTimerCallback */
+  /* USER CODE BEGIN StartLowTask */
+  /* Infinite loop */
+  for(;;)
+  {
+	  printf("\r\nEntered LOWTask and waiting for semaphore\n");
+
+		osSemaphoreWait(BinarySemHandle, osWaitForever);
+
+	  printf ("\rSemaphore acquired by LOW Task\n");
+	  /*wait till the pin go low*/
+		while (HAL_GPIO_ReadPin(GPIOA, GPIO_PIN_0)){
+			HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_13);
+		}
+	  printf ("\rLeaving LOWTask and releasing Semaphore\n");
+
+		osSemaphoreRelease(BinarySemHandle);
+		osDelay(2000);
+  }
+  /* USER CODE END StartLowTask */
 }
 
 /**
