@@ -52,6 +52,9 @@ default.size.stdout \
 OBJDUMP_LIST += \
 EmbeddedSystemsCourseF0.list \
 
+OBJCOPY_HEX += \
+EmbeddedSystemsCourseF0.hex \
+
 
 # All Target
 all: main-build
@@ -75,12 +78,17 @@ EmbeddedSystemsCourseF0.list: $(EXECUTABLES) makefile objects.list $(OPTIONAL_TO
 	@echo 'Finished building: $@'
 	@echo ' '
 
+EmbeddedSystemsCourseF0.hex: $(EXECUTABLES) makefile objects.list $(OPTIONAL_TOOL_DEPS)
+	arm-none-eabi-objcopy  -O ihex $(EXECUTABLES) "EmbeddedSystemsCourseF0.hex"
+	@echo 'Finished building: $@'
+	@echo ' '
+
 # Other Targets
 clean:
-	-$(RM) EmbeddedSystemsCourseF0.elf EmbeddedSystemsCourseF0.list EmbeddedSystemsCourseF0.map default.size.stdout
+	-$(RM) EmbeddedSystemsCourseF0.elf EmbeddedSystemsCourseF0.hex EmbeddedSystemsCourseF0.list EmbeddedSystemsCourseF0.map default.size.stdout
 	-@echo ' '
 
-secondary-outputs: $(SIZE_OUTPUT) $(OBJDUMP_LIST)
+secondary-outputs: $(SIZE_OUTPUT) $(OBJDUMP_LIST) $(OBJCOPY_HEX)
 
 fail-specified-linker-script-missing:
 	@echo 'Error: Cannot find the specified linker script. Check the linker settings in the build configuration.'
