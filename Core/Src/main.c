@@ -93,7 +93,7 @@ int main(void) {
 		/* USER CODE END WHILE */
 
 		/* USER CODE BEGIN 3 */
-		if (HAL_GPIO_ReadPin(GPIOB, GPIO_PIN_1) == 0) {
+		if (HAL_GPIO_ReadPin(GPIOB, GPIO_PIN_1) == 0 && HAL_GPIO_ReadPin(GPIOB, GPIO_PIN_2) == 0) {
 			/*Set user LED to 1 logic*/
 			HAL_GPIO_WritePin(GPIOB, GPIO_PIN_0, GPIO_PIN_SET);
 			HAL_Delay(250);
@@ -191,8 +191,8 @@ static void MX_GPIO_Init(void) {
 	GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
 	HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
-	/*Configure GPIO pin : PB1 */
-	GPIO_InitStruct.Pin = GPIO_PIN_1;
+	/*Configure GPIO pins : PB1 PB2 */
+	GPIO_InitStruct.Pin = GPIO_PIN_1 | GPIO_PIN_2;
 	GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
 	GPIO_InitStruct.Pull = GPIO_PULLUP;
 	HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
