@@ -93,35 +93,47 @@ int main(void) {
 		/* USER CODE END WHILE */
 
 		/* USER CODE BEGIN 3 */
-		if (HAL_GPIO_ReadPin(GPIOB, GPIO_PIN_1) == 0 && HAL_GPIO_ReadPin(GPIOB, GPIO_PIN_2) == 0) {
-			/*Set user LED to 1 logic*/
-			HAL_GPIO_WritePin(GPIOB, GPIO_PIN_0, GPIO_PIN_SET);
-			HAL_Delay(250);
-			/*Reset user LED to 0 logic*/
-			HAL_GPIO_WritePin(GPIOB, GPIO_PIN_0, GPIO_PIN_RESET);
-			HAL_Delay(250);
+		if (HAL_GPIO_ReadPin(GPIOB, GPIO_PIN_1) == 0) {
+			while (1) {
+				/*Set user LED to 1 logic*/
+				HAL_GPIO_WritePin(GPIOB, GPIO_PIN_0, GPIO_PIN_SET);
+				HAL_Delay(250);
+				/*Reset user LED to 0 logic*/
+				HAL_GPIO_WritePin(GPIOB, GPIO_PIN_0, GPIO_PIN_RESET);
+				HAL_Delay(250);
 
-			/*Set LED on [PA0] to 1 logic*/
-			HAL_GPIO_WritePin(GPIOA, GPIO_PIN_0, GPIO_PIN_SET);
-			HAL_Delay(250);
-			/*Reset LED on [PA0] to 0 logic*/
-			HAL_GPIO_WritePin(GPIOA, GPIO_PIN_0, GPIO_PIN_RESET);
-			HAL_Delay(250);
+				/*Set LED on [PA0] to 1 logic*/
+				HAL_GPIO_WritePin(GPIOA, GPIO_PIN_0, GPIO_PIN_SET);
+				HAL_Delay(250);
+				/*Reset LED on [PA0] to 0 logic*/
+				HAL_GPIO_WritePin(GPIOA, GPIO_PIN_0, GPIO_PIN_RESET);
+				HAL_Delay(250);
 
-			/*Set LED on [PA1] to 1 logic*/
-			HAL_GPIO_WritePin(GPIOA, GPIO_PIN_1, GPIO_PIN_SET);
-			HAL_Delay(250);
-			/*Reset LED on [PA1] to 0 logic*/
-			HAL_GPIO_WritePin(GPIOA, GPIO_PIN_1, GPIO_PIN_RESET);
-			HAL_Delay(250);
-		} else {
-			/*Reset user LED to 0 logic*/
-			HAL_GPIO_WritePin(GPIOB, GPIO_PIN_0, GPIO_PIN_RESET);
-			/*Reset LED on [PA0] to 0 logic*/
-			HAL_GPIO_WritePin(GPIOA, GPIO_PIN_0, GPIO_PIN_RESET);
-			/*Reset LED on [PA1] to 0 logic*/
-			HAL_GPIO_WritePin(GPIOA, GPIO_PIN_1, GPIO_PIN_RESET);
+				/*Set LED on [PA1] to 1 logic*/
+				HAL_GPIO_WritePin(GPIOA, GPIO_PIN_1, GPIO_PIN_SET);
+				HAL_Delay(250);
+				/*Reset LED on [PA1] to 0 logic*/
+				HAL_GPIO_WritePin(GPIOA, GPIO_PIN_1, GPIO_PIN_RESET);
+				HAL_Delay(250);
+				if (HAL_GPIO_ReadPin(GPIOB, GPIO_PIN_2) == 0) {
+					/*Reset user LED to 0 logic*/
+					HAL_GPIO_WritePin(GPIOB, GPIO_PIN_0, GPIO_PIN_RESET);
+					/*Reset LED on [PA0] to 0 logic*/
+					HAL_GPIO_WritePin(GPIOA, GPIO_PIN_0, GPIO_PIN_RESET);
+					/*Reset LED on [PA1] to 0 logic*/
+					HAL_GPIO_WritePin(GPIOA, GPIO_PIN_1, GPIO_PIN_RESET);
+					break;
+				}
+			}
 		}
+//		else {
+//			/*Reset user LED to 0 logic*/
+//			HAL_GPIO_WritePin(GPIOB, GPIO_PIN_0, GPIO_PIN_RESET);
+//			/*Reset LED on [PA0] to 0 logic*/
+//			HAL_GPIO_WritePin(GPIOA, GPIO_PIN_0, GPIO_PIN_RESET);
+//			/*Reset LED on [PA1] to 0 logic*/
+//			HAL_GPIO_WritePin(GPIOA, GPIO_PIN_1, GPIO_PIN_RESET);
+//		}
 
 	}
 	/* USER CODE END 3 */
