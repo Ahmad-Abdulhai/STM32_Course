@@ -48,7 +48,17 @@
 void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
 /* USER CODE BEGIN PFP */
-
+/**
+ * @brief  EXTI line detection callback.
+ * @param  GPIO_Pin Specifies the port pin connected to corresponding EXTI line.
+ * @retval None
+ */
+void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) {
+	if (GPIO_Pin == GPIO_PIN_11) {
+		/*Toggle status user LED on board */
+		HAL_GPIO_TogglePin(GPIOB, GPIO_PIN_0);
+	}
+}
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -93,48 +103,19 @@ int main(void) {
 		/* USER CODE END WHILE */
 
 		/* USER CODE BEGIN 3 */
-		if (HAL_GPIO_ReadPin(GPIOB, GPIO_PIN_1) == 0) {
-			while (1) {
-				/*Set user LED to 1 logic*/
-				HAL_GPIO_WritePin(GPIOB, GPIO_PIN_0, GPIO_PIN_SET);
-				HAL_Delay(250);
-				/*Reset user LED to 0 logic*/
-				HAL_GPIO_WritePin(GPIOB, GPIO_PIN_0, GPIO_PIN_RESET);
-				HAL_Delay(250);
+		/*Set LED on [PA0] to 1 logic*/
+		HAL_GPIO_WritePin(GPIOA, GPIO_PIN_0, GPIO_PIN_SET);
+		HAL_Delay(250);
+		/*Reset LED on [PA0] to 0 logic*/
+		HAL_GPIO_WritePin(GPIOA, GPIO_PIN_0, GPIO_PIN_RESET);
+		HAL_Delay(250);
 
-				/*Set LED on [PA0] to 1 logic*/
-				HAL_GPIO_WritePin(GPIOA, GPIO_PIN_0, GPIO_PIN_SET);
-				HAL_Delay(250);
-				/*Reset LED on [PA0] to 0 logic*/
-				HAL_GPIO_WritePin(GPIOA, GPIO_PIN_0, GPIO_PIN_RESET);
-				HAL_Delay(250);
-
-				/*Set LED on [PA1] to 1 logic*/
-				HAL_GPIO_WritePin(GPIOA, GPIO_PIN_1, GPIO_PIN_SET);
-				HAL_Delay(250);
-				/*Reset LED on [PA1] to 0 logic*/
-				HAL_GPIO_WritePin(GPIOA, GPIO_PIN_1, GPIO_PIN_RESET);
-				HAL_Delay(250);
-				if (HAL_GPIO_ReadPin(GPIOB, GPIO_PIN_2) == 0) {
-					/*Reset user LED to 0 logic*/
-					HAL_GPIO_WritePin(GPIOB, GPIO_PIN_0, GPIO_PIN_RESET);
-					/*Reset LED on [PA0] to 0 logic*/
-					HAL_GPIO_WritePin(GPIOA, GPIO_PIN_0, GPIO_PIN_RESET);
-					/*Reset LED on [PA1] to 0 logic*/
-					HAL_GPIO_WritePin(GPIOA, GPIO_PIN_1, GPIO_PIN_RESET);
-					break;
-				}
-			}
-		}
-//		else {
-//			/*Reset user LED to 0 logic*/
-//			HAL_GPIO_WritePin(GPIOB, GPIO_PIN_0, GPIO_PIN_RESET);
-//			/*Reset LED on [PA0] to 0 logic*/
-//			HAL_GPIO_WritePin(GPIOA, GPIO_PIN_0, GPIO_PIN_RESET);
-//			/*Reset LED on [PA1] to 0 logic*/
-//			HAL_GPIO_WritePin(GPIOA, GPIO_PIN_1, GPIO_PIN_RESET);
-//		}
-
+		/*Set LED on [PA1] to 1 logic*/
+		HAL_GPIO_WritePin(GPIOA, GPIO_PIN_1, GPIO_PIN_SET);
+		HAL_Delay(250);
+		/*Reset LED on [PA1] to 0 logic*/
+		HAL_GPIO_WritePin(GPIOA, GPIO_PIN_1, GPIO_PIN_RESET);
+		HAL_Delay(250);
 	}
 	/* USER CODE END 3 */
 }
@@ -203,11 +184,15 @@ static void MX_GPIO_Init(void) {
 	GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
 	HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
-	/*Configure GPIO pins : PB1 PB2 */
-	GPIO_InitStruct.Pin = GPIO_PIN_1 | GPIO_PIN_2;
-	GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
+	/*Configure GPIO pin : PB11 */
+	GPIO_InitStruct.Pin = GPIO_PIN_11;
+	GPIO_InitStruct.Mode = GPIO_MODE_IT_FALLING;
 	GPIO_InitStruct.Pull = GPIO_PULLUP;
 	HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
+
+	/* EXTI interrupt init*/
+	HAL_NVIC_SetPriority(EXTI4_15_IRQn, 0, 0);
+	HAL_NVIC_EnableIRQ(EXTI4_15_IRQn);
 
 }
 
