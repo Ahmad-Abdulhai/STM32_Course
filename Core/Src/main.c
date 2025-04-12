@@ -41,7 +41,7 @@
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
-
+uint8_t FlagExternalInterrupt = 0;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -56,7 +56,7 @@ static void MX_GPIO_Init(void);
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) {
 	if (GPIO_Pin == GPIO_PIN_11) {
 		/*Toggle status user LED on board */
-		HAL_GPIO_TogglePin(GPIOB, GPIO_PIN_0);
+		FlagExternalInterrupt = 1;
 	}
 }
 /* USER CODE END PFP */
@@ -105,17 +105,49 @@ int main(void) {
 		/* USER CODE BEGIN 3 */
 		/*Set LED on [PA0] to 1 logic*/
 		HAL_GPIO_WritePin(GPIOA, GPIO_PIN_0, GPIO_PIN_SET);
-		HAL_Delay(250);
+		HAL_Delay(350);
 		/*Reset LED on [PA0] to 0 logic*/
 		HAL_GPIO_WritePin(GPIOA, GPIO_PIN_0, GPIO_PIN_RESET);
-		HAL_Delay(250);
+		HAL_Delay(350);
 
 		/*Set LED on [PA1] to 1 logic*/
 		HAL_GPIO_WritePin(GPIOA, GPIO_PIN_1, GPIO_PIN_SET);
-		HAL_Delay(250);
+		HAL_Delay(350);
 		/*Reset LED on [PA1] to 0 logic*/
 		HAL_GPIO_WritePin(GPIOA, GPIO_PIN_1, GPIO_PIN_RESET);
-		HAL_Delay(250);
+		HAL_Delay(350);
+
+		if (FlagExternalInterrupt) {
+			/*Set user LED to 1 logic*/
+			HAL_GPIO_WritePin(GPIOB, GPIO_PIN_0, GPIO_PIN_SET);
+			HAL_Delay(150);
+			/*Reset user LED to 0 logic*/
+			HAL_GPIO_WritePin(GPIOB, GPIO_PIN_0, GPIO_PIN_RESET);
+			HAL_Delay(150);
+
+			/*Set user LED to 1 logic*/
+			HAL_GPIO_WritePin(GPIOB, GPIO_PIN_0, GPIO_PIN_SET);
+			HAL_Delay(100);
+			/*Reset user LED to 0 logic*/
+			HAL_GPIO_WritePin(GPIOB, GPIO_PIN_0, GPIO_PIN_RESET);
+			HAL_Delay(100);
+
+			/*Set user LED to 1 logic*/
+			HAL_GPIO_WritePin(GPIOB, GPIO_PIN_0, GPIO_PIN_SET);
+			HAL_Delay(100);
+			/*Reset user LED to 0 logic*/
+			HAL_GPIO_WritePin(GPIOB, GPIO_PIN_0, GPIO_PIN_RESET);
+			HAL_Delay(100);
+
+			/*Set user LED to 1 logic*/
+			HAL_GPIO_WritePin(GPIOB, GPIO_PIN_0, GPIO_PIN_SET);
+			HAL_Delay(100);
+			/*Reset user LED to 0 logic*/
+			HAL_GPIO_WritePin(GPIOB, GPIO_PIN_0, GPIO_PIN_RESET);
+			HAL_Delay(100);
+			/*Reset Flag*/
+			FlagExternalInterrupt = 0;
+		}
 	}
 	/* USER CODE END 3 */
 }
