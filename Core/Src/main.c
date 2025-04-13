@@ -81,19 +81,7 @@ void displayDigit(uint8_t digit) {
     HAL_GPIO_WritePin(GPIOA, GPIO_PIN_5, (pattern >> 5) & 0x01);
     HAL_GPIO_WritePin(GPIOA, GPIO_PIN_6, (pattern >> 6) & 0x01);
 }
-/**
- * @brief  EXTI line detection callback.
- * @param  GPIO_Pin Specifies the port pin connected to corresponding EXTI line.
- * @retval None
- */
-void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) {
-	if (GPIO_Pin == GPIO_PIN_11) {
-		/*Increment digit (0-9 loop)*/
-		currentDigit = (currentDigit + 1 )%10 ;
-		/* Show the new digit*/
-		displayDigit(currentDigit);
-	}
-}
+
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -131,7 +119,7 @@ int main(void)
   MX_GPIO_Init();
   /* USER CODE BEGIN 2 */
   /*Display '0' at startup*/
-  displayDigit(currentDigit);
+//  displayDigit(currentDigit);
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -140,6 +128,12 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
+		/*Increment digit (0-9 loop)*/
+		currentDigit = (currentDigit + 1 )%10 ;
+		/* Show the new digit*/
+		displayDigit(currentDigit);
+		/*interval time to update screen */
+		HAL_Delay(1000);
 
 	}
   /* USER CODE END 3 */
@@ -215,16 +209,6 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
-
-  /*Configure GPIO pin : PB11 */
-  GPIO_InitStruct.Pin = GPIO_PIN_11;
-  GPIO_InitStruct.Mode = GPIO_MODE_IT_FALLING;
-  GPIO_InitStruct.Pull = GPIO_PULLUP;
-  HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
-
-  /* EXTI interrupt init*/
-  HAL_NVIC_SetPriority(EXTI4_15_IRQn, 0, 0);
-  HAL_NVIC_EnableIRQ(EXTI4_15_IRQn);
 
 }
 
