@@ -17,29 +17,31 @@
 
 int main() {
 
-	/*uint8_t: Unsigned 8-bit integer (0 to 255)*/
-	uint8_t age = 25;
-	printf("uint8_t - Age: %u\n", age);
+		/* 1 - Casting float to int
+		 *  Gives you a floating-point number to an integer, truncating any decimal places
+		 *  */
+		float a = 5.75423;
+		int32_t b = (int) a;
+		printf("Result: %d\n\n", b);
+/******************************************************************************/
 
-	/*uint16_t: Unsigned 16-bit integer (0 to 65,535)*/
-	uint16_t distance = 5000;
-	printf("uint16_t - Distance: %u meters\n", distance);
+		/*2 - Casting char to int*/
+		char ch = 'A';
+		int ascii_value = (int)ch;
+		printf("ASCII Value of %c: %d\n\n", ch, ascii_value);
+/******************************************************************************/
+		/* 3 - Casting uint32_t to uint8_t
+		 *  Gives you the least significant byte of the uint32_t value.
+		 * */
+		uint32_t largeValue = 0x12345678;
+		uint8_t smallValue = (uint8_t)(largeValue); // smallValue will be 0x78
+		printf("smallValue after casting: 0x%x\n\n", smallValue);
 
-	/*uint32_t: Unsigned 32-bit integer (0 to 4,294,967,295)*/
-	uint32_t population = 1500000000;
-	printf("uint32_t - Population: %u\n", population);
-
-	/* int: Signed 32-bit integer (-2,147,483,648 to 2,147,483,647)  --> the same int32_t*/
-	int temperature = -15;
-	printf("int - Temperature: %d°C\n", temperature);
-
-	/*int8_t Signed 8-bit integer (-128 to 127 )*/
-	int8_t size = 100 ;
-	printf("int8_t - size : %d m^3\n", size);
-
-	/*int16_t Signed 16-bit integer (-32,768 to +32,768 )*/
-	int16_t int16Var = -32768 ;
-	printf("int16_t - int16Var : %d \n", int16Var);
+/******************************************************************************/
+		/* 4 - Casting double to float */
+		double highPrecisionValue = 123.456789012345;
+		float lessPrecisionValue = (float)(highPrecisionValue); // lessPrecisionValue will be approximately 123.45679
+		printf("lessPrecisionValue after casting:%f\n\n", lessPrecisionValue);
 
     return 0;
 }
