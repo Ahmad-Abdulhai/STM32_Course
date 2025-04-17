@@ -15,35 +15,58 @@
 #include <stdio.h>
 #include <stdint.h>
 
-
-/* Using typedef with struct can simplify the usage of structure types by allowing you
- * to omit the struct keyword when declaring variables of that type.
+/* Enumeration in C, also known as enum, is a user-defined data type
+ * that consists of integral constants. It is used to assign names to
+ * integral constants, making the code more readable and maintainable.
  * */
 
-/* Define a structure named Person */
-typedef struct{
-	char name[50];
-	int age;
-	float height;
-	char phone[15];
-	char email[50];
-	float weight;
-}Person_t;
+/* Define an enumeration named Weekday*/
+typedef enum {
+	MONDAY,    // 0
+	TUESDAY,   // 1
+	WEDNESDAY, // 2
+	THURSDAY,  // 3
+	FRIDAY,    // 4
+	SATURDAY,  // 5
+	SUNDAY,     // 6
+	InvalidDay = 255,
+} Weekday;
+;
 int main() {
 
-	/* Declare and initialize a structure variable */
-	    Person_t person1 = {"Ahmad", 30, 5.7, "123-456-7890","Ahmad@example.com", 65.0 };
-//      Person_t person1 =  {.name = "adel", .age = 30, .height = 5.7, .phone = "123-456-7890", .email = "alice@example.com", .weight = 65.0};
-	//    Person_t person3 =  {"mark", 30, 5.7, "123-456-7890", "alice@example.com", 65.0};
+	/*Declare and initialize an enumeration variable*/
+	Weekday today = WEDNESDAY;
 
-	/*Access and print structure members*/
-	printf("Name: %s\n", person1.name);
-	printf("Age: %d\n", person1.age);
-	printf("Height: %.2f\n", person1.height);
-	printf("Phone: %s\n", person1.phone);
-	printf("Email: %s\n", person1.email);
-	printf("Weight: %.2f\n", person1.weight);
+	/* Print the value of the enumeration variable*/
+	printf("Value of today: %d\n", today);
 
+	/* Use switch-case with enumeration*/
+	switch (today) {
+	case MONDAY:
+		printf("Today is Monday.\n");
+		break;
+	case TUESDAY:
+		printf("Today is Tuesday.\n");
+		break;
+	case WEDNESDAY:
+		printf("Today is Wednesday.\n");
+		break;
+	case THURSDAY:
+		printf("Today is Thursday.\n");
+		break;
+	case FRIDAY:
+		printf("Today is Friday.\n");
+		break;
+	case SATURDAY:
+		printf("Today is Saturday.\n");
+		break;
+	case SUNDAY:
+		printf("Today is Sunday.\n");
+		break;
+	default:
+		printf("Invalid day.\n");
+		break;
+	}
 	return 0;
 }
 
