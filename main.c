@@ -15,60 +15,54 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
-
-/* 1-Function Declaration/Prototype
- * function-type function-name ( param1-type param1, param2-type param2, … );
- *
- * 2-Function Definition
- * function-type function-name( param1-type param1, param2-type param2, … ){
- *  //code for the function
- *  }
- * */
+/*
+ * In C, parameters can be passed by value, where a copy of the data is
+ * made, or by reference, using pointers, which allows the function to modify
+ * the original data.
+ * there is three case to passing the arguments to function
+ * 1- Pass by value
+ * 2- Pass by reference
+ * 3- Pass by array
+ */
 /* Function declarations -------------- */
-void greet(void);
-int getNumber(void);
-void printSum(int a, int b);
-int multiply(int a, int b);
-
+uint8_t Add_5_PassByValue(uint8_t value);
+void swap(int *firstVar, int *secondVar);
+void printArray(int arr[], int size);
 int main() {
 
-	/*Calling a function with no return value and no parameters*/
-	greet();
+	/*Calling the function and passing it parameters by Value*/
+	uint8_t result = Add_5_PassByValue(10);
+	printf("Result Passing by value = %d\n\n", result);
 
-	/*Calling a function with a return value and no parameters*/
-	int num = getNumber();
-	printf("Number: %d\n", num);
+	/******************************************************************************/
+	/*Calling the function and passing it parameters by Reference*/
+	int a = 10, b = 20;
+	swap(&a, &b);
+	printf("a: %d, b: %d\n\n", a, b);
 
-	/*Calling a function with no return value and parameters*/
-	printSum(5, 7);
+	/******************************************************************************/
+	int arr[5] = { 1, 2, 3, 4, 5 };
+	/*Calling function and Passing array to the print the elements of array*/
+	printArray(arr, 5);
 
-	/*Calling a function with a return value and parameters*/
-	int result = multiply(4, 5);
-	printf("Multiplication Result: %d\n", result);
 	return 0;
 }
 /* Function definitions ---------------- */
-/* 1- No return value, no parameters */
-void greet(void) {
-	printf("Hello, world!\n");
 
+uint8_t Add_5_PassByValue(uint8_t value) {
+	value += 5;
+	return value;
 }
 /*****************************************/
-
-/* 2- Return value, no parameters */
-int getNumber(void) {
-	return rand();
+void swap(int *firstVar, int *secondVar) {
+	int temp = *firstVar;
+	*firstVar = *secondVar;
+	*secondVar = temp;
 }
 /*****************************************/
-
-/* 3- No return value, parameters */
-void printSum(int a, int b) {
-	printf("Sum: %d\n", a + b);
+void printArray(int arr[], int size) {
+	printf("Array elements:\n");
+	for (int i = 0; i < size; i++) {
+		printf("%d ", arr[i]);
+	}
 }
-/*****************************************/
-
-/* 4- Return value, parameters */
-int multiply(int a, int b) {
-	return a * b;
-}
-
