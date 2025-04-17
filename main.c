@@ -13,58 +13,62 @@
  ******************************************************************************
  */
 #include <stdio.h>
+#include <stdlib.h>
 #include <stdint.h>
+
+/* 1-Function Declaration/Prototype
+ * function-type function-name ( param1-type param1, param2-type param2, … );
+ *
+ * 2-Function Definition
+ * function-type function-name( param1-type param1, param2-type param2, … ){
+ *  //code for the function
+ *  }
+ * */
+/* Function declarations -------------- */
+void greet(void);
+int getNumber(void);
+void printSum(int a, int b);
+int multiply(int a, int b);
+
 int main() {
 
-	/* Description: Pointers are variables that store the memory address of another variable.
-	 * Pointers are critical in embedded systems for interacting with hardware, managing memory, and optimizing performance.
-		 * (*) Operator:
-		 * Pointer Declaration: Used to declare a pointer variable.
-		 * Dereference Operator: Used to access the value stored at the address pointed to by the pointer.
-		 *
-		 * (&) Operator:
-		 * The ampersand & operator is used to get the address of a variable.
-		 * It's also known as the "address-of" operator.
-		 * */
+	/*Calling a function with no return value and no parameters*/
+	greet();
 
-	/*Pointer Declaration
-	 * type *pointerName;
-	 *  Initialize	pointer to 0, NULL, or	an	address. • 0 or NULL – points to nothing (NULL preferred)
-	 * */
-	    int a = 10;
-	    int *p = &a;// a p set to address of a
+	/*Calling a function with a return value and no parameters*/
+	int num = getNumber();
+	printf("Number: %d\n", num);
 
-	    printf("Value of a: %d\n", a);
-	    printf("Address of a: %p\n", &a);
-	    printf("Pointer p holds address: %p\n", p);
-	    printf("Value pointed by p: %d\n", *p);
+	/*Calling a function with no return value and parameters*/
+	printSum(5, 7);
 
-	    /*Changing value using pointer*/
-	    *p = 20;
-	    printf("New value of a: %d\n", a);
-	    *p = 2 * *p - a;
-	    printf("New value of a after operator: %d\n\n", a);
-
-/*******************************************************************************/
-    int arr[5] = {10, 20, 30, 40, 50};
-    int *ptr = arr;  // Pointer to the first element of the array
-
-    printf("Original array elements:\n");
-    for (int i = 0; i < 5; i++) {
-        printf("arr[%d] = %d\n", i, arr[i]);
-    }
-
-    // Modify array elements using the pointer
-    for (int i = 0; i < 5; i++) {
-        *(ptr + i) = *(ptr + i) * 2;  // Double each element
-
-        //arr[i] = arr[i] * 2;
-    }
-
-    printf("\nModified array elements:\n");
-    for (int i = 0; i < 5; i++) {
-        printf("arr[%d] = %d\n", i, arr[i]);
-    }
-
+	/*Calling a function with a return value and parameters*/
+	int result = multiply(4, 5);
+	printf("Multiplication Result: %d\n", result);
 	return 0;
 }
+/* Function definitions ---------------- */
+/* 1- No return value, no parameters */
+void greet(void) {
+	printf("Hello, world!\n");
+
+}
+/*****************************************/
+
+/* 2- Return value, no parameters */
+int getNumber(void) {
+	return rand();
+}
+/*****************************************/
+
+/* 3- No return value, parameters */
+void printSum(int a, int b) {
+	printf("Sum: %d\n", a + b);
+}
+/*****************************************/
+
+/* 4- Return value, parameters */
+int multiply(int a, int b) {
+	return a * b;
+}
+
