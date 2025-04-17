@@ -16,47 +16,42 @@
 #include <stdint.h>
 int main() {
 
-	int score = 80;
 
-	// Input the score
-	printf("your score: %d\n\n", score);
+    /* for Loop:
+     * Description: The for loop is used when the number of iterations is known beforehand.
+     * It's typically used for counting or iterating over a sequence.
+     */
+    printf("for Loop:\n");
+    for (int i = 1; i <= 5; i++) {
+        printf("Iteration %d\n", i);
+    }
+/*******************************************************************************/
 
-	// Using if-else statement to determine the grade
-	printf("Using if-else statement to determine the grade: \n");
-//	if (score >= 0) {
-//		printf("Grade is positive \n");
-//	}
-	if ((score >= 90)) {
-		printf("Grade: A\n\n");
-	} else if (score >= 80) {
-		printf("Grade: B\n\n");
-	} else if (score >= 70) {
-		printf("Grade: C\n\n");
-	} else if (score >= 60) {
-		printf("Grade: D\n\n");
-	} else {
-		printf("Grade: F\n\n");
-	}
+    /* while Loop:
+     * Description: The while loop is used when the number of iterations
+     * is not known beforehand and depends on a condition.
+     * The loop checks the condition before executing the block of code.
+     */
+    int j = 5;
+    printf("\nwhile Loop:\n");
+    while (j > 0) {
+        printf("Iteration %d\n", j);
+        j--;
+    }
+/*******************************************************************************/
 
-	// Using switch statement to display a message based on the grade
-	printf(
-			"Using switch statement to display a message based on the grade: \n");
-	switch (score / 10) {
-	case 10:
-	case 9:
-		printf("Excellent! Keep it up.\n");
-		break;
-	case 8:
-		printf("Very Good! Well done.\n");
-		break;
-	case 7:
-		printf("Good job! Keep improving.\n");
-		break;
-	case 6:
-		printf("Fair. Need more effort.\n");
-		break;
-	default:
-		printf("Poor performance. Study harder!\n");
-	}
+    /* do-while Loop:
+     * Description: The do-while loop is similar to the while loop,
+     * but it guarantees that the block of code is executed at least once.
+     * The condition is checked after the code block is executed.
+     */
+    int k = 5;
+    printf("\ndo-while Loop:\n");
+    do {
+        printf("Iteration %d\n", k);
+        k--;
+    } while (k > 0);
+
+
 	return 0;
 }
