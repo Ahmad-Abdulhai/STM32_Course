@@ -16,42 +16,41 @@
 #include <stdint.h>
 int main() {
 
+	/* Description: An array is a collection of elements
+	 * of the same type stored in contiguous memory locations.
+	 *
+	 * Arrays are used in embedded systems for handling multiple similar data
+	 * efficiently, such as sensor readings, buffer storage, and lookup tables.
+	 *
+	 *  Array Initialization Syntax:
+	 * type arrayName[arraySize] = {val1, val2, ..., valN};
+	 * type arrayName[arraySize] = {0}; // Initialize all to 0
+	 **/
 
-    /* for Loop:
-     * Description: The for loop is used when the number of iterations is known beforehand.
-     * It's typically used for counting or iterating over a sequence.
-     */
-    printf("for Loop:\n");
-    for (int i = 1; i <= 5; i++) {
-        printf("Iteration %d\n", i);
-    }
-/*******************************************************************************/
+	/* Declare and initialize an array of student scores*/
+	int scores[5] = { 78, 85, 92, 67, 88 };
+	int threshold = 90;
+	int i;
 
-    /* while Loop:
-     * Description: The while loop is used when the number of iterations
-     * is not known beforehand and depends on a condition.
-     * The loop checks the condition before executing the block of code.
-     */
-    int j = 5;
-    printf("\nwhile Loop:\n");
-    while (j > 0) {
-        printf("Iteration %d\n", j);
-        j--;
-    }
-/*******************************************************************************/
+	/*Check if any score is above the threshold*/
+	for (i = 0; i < 5; i++) {
+		if (scores[i] > threshold) {
+			printf("Score above threshold: scores[%d] = %d\n", i, scores[i]);
+		}
+	}
 
-    /* do-while Loop:
-     * Description: The do-while loop is similar to the while loop,
-     * but it guarantees that the block of code is executed at least once.
-     * The condition is checked after the code block is executed.
-     */
-    int k = 5;
-    printf("\ndo-while Loop:\n");
-    do {
-        printf("Iteration %d\n", k);
-        k--;
-    } while (k > 0);
+/******************************************************************************/
+	/* Strings in C: A Special Kind of Array.
+	 * Strings are arrays of characters terminated by a null character \0.
+	 *
+	 * Strings are often used for storing data read from or to be written to
+     *  peripherals, like displays in embedded systems
+	 */
 
-
+	/*Declare and initialize an string messages*/
+	char errorMessage[20] = "Error Code: ";
+	char str[] = "\nHello, World!"; //NOTE! String initialization automatically includes the null terminator.
+	printf(errorMessage);
+	printf(str);
 	return 0;
 }
