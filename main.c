@@ -13,56 +13,36 @@
  ******************************************************************************
  */
 #include <stdio.h>
-#include <stdlib.h>
 #include <stdint.h>
-/*
- * In C, parameters can be passed by value, where a copy of the data is
- * made, or by reference, using pointers, which allows the function to modify
- * the original data.
- * there is three case to passing the arguments to function
- * 1- Pass by value
- * 2- Pass by reference
- * 3- Pass by array
- */
-/* Function declarations -------------- */
-uint8_t Add_5_PassByValue(uint8_t value);
-void swap(int *firstVar, int *secondVar);
-void printArray(int arr[], int size);
+
+/* Structures in C are a powerful way to group different variables of
+ * various data types under a single name. This makes it easier to
+ *  manage related data as a single unit. */
+
+/* Define a structure named Person */
+struct Person {
+	char name[50];
+	int age;
+	float height;
+	char phone[15];
+	char email[50];
+	float weight;
+};
 int main() {
 
-	/*Calling the function and passing it parameters by Value*/
-	uint8_t result = Add_5_PassByValue(10);
-	printf("Result Passing by value = %d\n\n", result);
+	/* Declare and initialize a structure variable */
+	struct Person person1 = {"Ahmad", 30, 5.7, "123-456-7890","Ahmad@example.com", 65.0 };
+    //  struct Person person2 =  {.name = "adel", .age = 30, .height = 5.7, .phone = "123-456-7890", .email = "alice@example.com", .weight = 65.0};
+	//    struct Person person3 =  {"mark", 30, 5.7, "123-456-7890", "alice@example.com", 65.0};
 
-	/******************************************************************************/
-	/*Calling the function and passing it parameters by Reference*/
-	int a = 10, b = 20;
-	swap(&a, &b);
-	printf("a: %d, b: %d\n\n", a, b);
-
-	/******************************************************************************/
-	int arr[5] = { 1, 2, 3, 4, 5 };
-	/*Calling function and Passing array to the print the elements of array*/
-	printArray(arr, 5);
+	/*Access and print structure members*/
+	printf("Name: %s\n", person1.name);
+	printf("Age: %d\n", person1.age);
+	printf("Height: %.2f\n", person1.height);
+	printf("Phone: %s\n", person1.phone);
+	printf("Email: %s\n", person1.email);
+	printf("Weight: %.2f\n", person1.weight);
 
 	return 0;
 }
-/* Function definitions ---------------- */
 
-uint8_t Add_5_PassByValue(uint8_t value) {
-	value += 5;
-	return value;
-}
-/*****************************************/
-void swap(int *firstVar, int *secondVar) {
-	int temp = *firstVar;
-	*firstVar = *secondVar;
-	*secondVar = temp;
-}
-/*****************************************/
-void printArray(int arr[], int size) {
-	printf("Array elements:\n");
-	for (int i = 0; i < size; i++) {
-		printf("%d ", arr[i]);
-	}
-}
