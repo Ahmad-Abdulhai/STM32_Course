@@ -21,7 +21,8 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include<stdio.h>
+#include "lcd_txt.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -35,68 +36,69 @@
 
 /* Private macro -------------------------------------------------------------*/
 /* USER CODE BEGIN PM */
-#define PWM_MAX   100U
-#define PWM_STEP  5U
-uint32_t CCR_CH1 = 0;
+
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
+TIM_HandleTypeDef htim1;
 TIM_HandleTypeDef htim2;
 
 /* USER CODE BEGIN PV */
-uint8_t DutyCycle = 0;     // 0 --> 99
-uint8_t Direction = 0;   // 1 forward    0 backward
+#define TIMCLOCK_TIM2   48000000UL
+#define PRESCALAR_TIM2  48UL
+#define DUTYCYCLE       50U
+
+uint32_t IC_Val1 = 0; // Captured value at first edge
+uint32_t IC_Val2 = 0; // Captured value at seconds edge
+int32_t Difference = 0; // Difference between two captures (time between edges)
+uint8_t Is_First_Captured = 0;
+/* Measure Frequency */
+volatile uint32_t frequency = 0; // Final calculated frequency (Hz)
+char buff[16] = { 0 };
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
 static void MX_TIM2_Init(void);
+static void MX_TIM1_Init(void);
 /* USER CODE BEGIN PFP */
 /**
- * @brief  Sets the direction of a DC motor.
- * @param  Direction: Motor direction control
- *         - 0: Forward
- *         - Any other value: Reverse
- * @note   This function controls two GPIO pins connected to an H-bridge (IN1 and IN2).
- *         The combination of HIGH/LOW on these pins determines motor rotation direction.
- */
-void SetMotorDirection(uint8_t Direction) {
-	if (Direction == 0) {
-		/*Forward direction: IN1 = HIGH, IN2 = LOW*/
-		HAL_GPIO_WritePin(GPIOA, GPIO_PIN_0, GPIO_PIN_SET);   // IN1
-		HAL_GPIO_WritePin(GPIOA, GPIO_PIN_1, GPIO_PIN_RESET); // IN2
-	} else {
-		/*Reverse direction: IN1 = LOW, IN2 = HIGH*/
-		HAL_GPIO_WritePin(GPIOA, GPIO_PIN_0, GPIO_PIN_RESET); // IN1
-		HAL_GPIO_WritePin(GPIOA, GPIO_PIN_1, GPIO_PIN_SET);   // IN2
-	}
-}
-/**
- * @brief  Sets the speed of the DC motor using PWM.
- * @param  DutyCycle: PWM duty cycle PWM_MAX (0 to ARR max)
- *         - 0: Motor off
- *         - Higher value: Faster speed
- */
-void MotorSpeed(uint8_t DutyCycle) {
-
-	/*Update PWM compare value (duty cycle) for TIM2 Channel 1*/
-	TIM2->CCR1 = DutyCycle;
-}
-/**
- * @brief  EXTI line detection callback.
- * @param  GPIO_Pin Specifies the port pin connected to corresponding EXTI line.
+ * @brief  Input Capture callback in non-blocking mode
+ * @param  htim TIM IC handle
  * @retval None
  */
-void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) {
-	if (GPIO_Pin == GPIO_PIN_10) {
-		DutyCycle += PWM_STEP;
-		if (DutyCycle > PWM_MAX) {
-			DutyCycle = 0;
+void HAL_TIM_IC_CaptureCallback(TIM_HandleTypeDef *htim) {
+	/*Check if CHANNAL_1 is activated */
+	if (htim->Instance == TIM2 && htim->Channel == HAL_TIM_ACTIVE_CHANNEL_1) {
+		if (Is_First_Captured == 0) { // if the first rising edge is not captured
+			/* IC_Val1 = TIM2 -> CCR1 ;*/
+			IC_Val1 = HAL_TIM_ReadCapturedValue(htim, TIM_CHANNEL_1); // read the first value
+			Is_First_Captured = 1;  // set the first captured as true (captured)
+		}
+
+		else // If the first rising edge is captured, now we will capture the second edge
+		{
+			/*IC_Val2 = TIM2 -> CCR1;*/
+			IC_Val2 = HAL_TIM_ReadCapturedValue(htim, TIM_CHANNEL_1); // read second value
+
+			if (IC_Val2 > IC_Val1) {
+				Difference = IC_Val2 - IC_Val1;
+			}
+
+			else if (IC_Val1 > IC_Val2) {
+				Difference = (0xFFFFFFFF - IC_Val1) + IC_Val2;
+			}
+			float refClock = TIMCLOCK_TIM2 / (PRESCALAR_TIM2);
+
+			frequency = (uint32_t) (refClock / Difference);
+
+			/*__HAL_TIM_SET_COUNTER(htim, 0); */
+			TIM2->CNT = 0; // reset the counter
+			Is_First_Captured = 0; // set it back to false
 		}
 	}
 }
-
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -132,11 +134,19 @@ int main(void) {
 	/* Initialize all configured peripherals */
 	MX_GPIO_Init();
 	MX_TIM2_Init();
+	MX_TIM1_Init();
 	/* USER CODE BEGIN 2 */
-	/*Start PWM On Channel 1*/
-	HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_1);
-	/*Sets the direction of motor to Forward*/
-	SetMotorDirection(0);
+	/*Start PWM at 1KHZ */
+	HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
+	/*Start Timer2 to captured the input */
+	HAL_TIM_IC_Start_IT(&htim2, TIM_CHANNEL_1);
+	/* Set DutyCycle for Timer1 PWM ---> DutyCycle = (CCRx / ARR)[%] --> DutyCycle = 50 / 100 = 50%*/
+	TIM1->CCR1 = DUTYCYCLE;
+
+	lcd_init();
+	/*Welcome message*/
+	lcd_puts(0, 2, "STM32_IC");
+	HAL_Delay(3000);
 	/* USER CODE END 2 */
 
 	/* Infinite loop */
@@ -145,8 +155,13 @@ int main(void) {
 		/* USER CODE END WHILE */
 
 		/* USER CODE BEGIN 3 */
-		/*Sets the speed of the DC motor*/
-		MotorSpeed(DutyCycle);
+		/*Clear the LCD to update the value*/
+		lcd_clear();
+		/*Write string */
+		lcd_puts(0, 2, "Input capture");
+		sprintf(buff, "Freq=%04luHz", frequency);
+		lcd_puts(1, 2, buff);
+		HAL_Delay(1000);
 
 	}
 	/* USER CODE END 3 */
@@ -184,6 +199,77 @@ void SystemClock_Config(void) {
 }
 
 /**
+ * @brief TIM1 Initialization Function
+ * @param None
+ * @retval None
+ */
+static void MX_TIM1_Init(void) {
+
+	/* USER CODE BEGIN TIM1_Init 0 */
+
+	/* USER CODE END TIM1_Init 0 */
+
+	TIM_ClockConfigTypeDef sClockSourceConfig = { 0 };
+	TIM_MasterConfigTypeDef sMasterConfig = { 0 };
+	TIM_OC_InitTypeDef sConfigOC = { 0 };
+	TIM_BreakDeadTimeConfigTypeDef sBreakDeadTimeConfig = { 0 };
+
+	/* USER CODE BEGIN TIM1_Init 1 */
+
+	/* USER CODE END TIM1_Init 1 */
+	htim1.Instance = TIM1;
+	htim1.Init.Prescaler = 480 - 1;
+	htim1.Init.CounterMode = TIM_COUNTERMODE_UP;
+	htim1.Init.Period = 100 - 1;
+	htim1.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
+	htim1.Init.RepetitionCounter = 0;
+	htim1.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
+	if (HAL_TIM_Base_Init(&htim1) != HAL_OK) {
+		Error_Handler();
+	}
+	sClockSourceConfig.ClockSource = TIM_CLOCKSOURCE_INTERNAL;
+	if (HAL_TIM_ConfigClockSource(&htim1, &sClockSourceConfig) != HAL_OK) {
+		Error_Handler();
+	}
+	if (HAL_TIM_PWM_Init(&htim1) != HAL_OK) {
+		Error_Handler();
+	}
+	sMasterConfig.MasterOutputTrigger = TIM_TRGO_RESET;
+	sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
+	if (HAL_TIMEx_MasterConfigSynchronization(&htim1, &sMasterConfig)
+			!= HAL_OK) {
+		Error_Handler();
+	}
+	sConfigOC.OCMode = TIM_OCMODE_PWM1;
+	sConfigOC.Pulse = 0;
+	sConfigOC.OCPolarity = TIM_OCPOLARITY_HIGH;
+	sConfigOC.OCNPolarity = TIM_OCNPOLARITY_HIGH;
+	sConfigOC.OCFastMode = TIM_OCFAST_DISABLE;
+	sConfigOC.OCIdleState = TIM_OCIDLESTATE_RESET;
+	sConfigOC.OCNIdleState = TIM_OCNIDLESTATE_RESET;
+	if (HAL_TIM_PWM_ConfigChannel(&htim1, &sConfigOC, TIM_CHANNEL_1)
+			!= HAL_OK) {
+		Error_Handler();
+	}
+	sBreakDeadTimeConfig.OffStateRunMode = TIM_OSSR_DISABLE;
+	sBreakDeadTimeConfig.OffStateIDLEMode = TIM_OSSI_DISABLE;
+	sBreakDeadTimeConfig.LockLevel = TIM_LOCKLEVEL_OFF;
+	sBreakDeadTimeConfig.DeadTime = 0;
+	sBreakDeadTimeConfig.BreakState = TIM_BREAK_DISABLE;
+	sBreakDeadTimeConfig.BreakPolarity = TIM_BREAKPOLARITY_HIGH;
+	sBreakDeadTimeConfig.AutomaticOutput = TIM_AUTOMATICOUTPUT_DISABLE;
+	if (HAL_TIMEx_ConfigBreakDeadTime(&htim1, &sBreakDeadTimeConfig)
+			!= HAL_OK) {
+		Error_Handler();
+	}
+	/* USER CODE BEGIN TIM1_Init 2 */
+
+	/* USER CODE END TIM1_Init 2 */
+	HAL_TIM_MspPostInit(&htim1);
+
+}
+
+/**
  * @brief TIM2 Initialization Function
  * @param None
  * @retval None
@@ -196,17 +282,17 @@ static void MX_TIM2_Init(void) {
 
 	TIM_ClockConfigTypeDef sClockSourceConfig = { 0 };
 	TIM_MasterConfigTypeDef sMasterConfig = { 0 };
-	TIM_OC_InitTypeDef sConfigOC = { 0 };
+	TIM_IC_InitTypeDef sConfigIC = { 0 };
 
 	/* USER CODE BEGIN TIM2_Init 1 */
 
 	/* USER CODE END TIM2_Init 1 */
 	htim2.Instance = TIM2;
-	htim2.Init.Prescaler = 24 - 1;
+	htim2.Init.Prescaler = 48 - 1;
 	htim2.Init.CounterMode = TIM_COUNTERMODE_UP;
-	htim2.Init.Period = 100 - 1;
+	htim2.Init.Period = 4294967295;
 	htim2.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
-	htim2.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_ENABLE;
+	htim2.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
 	if (HAL_TIM_Base_Init(&htim2) != HAL_OK) {
 		Error_Handler();
 	}
@@ -214,7 +300,7 @@ static void MX_TIM2_Init(void) {
 	if (HAL_TIM_ConfigClockSource(&htim2, &sClockSourceConfig) != HAL_OK) {
 		Error_Handler();
 	}
-	if (HAL_TIM_PWM_Init(&htim2) != HAL_OK) {
+	if (HAL_TIM_IC_Init(&htim2) != HAL_OK) {
 		Error_Handler();
 	}
 	sMasterConfig.MasterOutputTrigger = TIM_TRGO_RESET;
@@ -223,18 +309,16 @@ static void MX_TIM2_Init(void) {
 			!= HAL_OK) {
 		Error_Handler();
 	}
-	sConfigOC.OCMode = TIM_OCMODE_PWM1;
-	sConfigOC.Pulse = 0;
-	sConfigOC.OCPolarity = TIM_OCPOLARITY_HIGH;
-	sConfigOC.OCFastMode = TIM_OCFAST_DISABLE;
-	if (HAL_TIM_PWM_ConfigChannel(&htim2, &sConfigOC, TIM_CHANNEL_1)
-			!= HAL_OK) {
+	sConfigIC.ICPolarity = TIM_INPUTCHANNELPOLARITY_RISING;
+	sConfigIC.ICSelection = TIM_ICSELECTION_DIRECTTI;
+	sConfigIC.ICPrescaler = TIM_ICPSC_DIV1;
+	sConfigIC.ICFilter = 0;
+	if (HAL_TIM_IC_ConfigChannel(&htim2, &sConfigIC, TIM_CHANNEL_1) != HAL_OK) {
 		Error_Handler();
 	}
 	/* USER CODE BEGIN TIM2_Init 2 */
 
 	/* USER CODE END TIM2_Init 2 */
-	HAL_TIM_MspPostInit(&htim2);
 
 }
 
@@ -251,34 +335,18 @@ static void MX_GPIO_Init(void) {
 	__HAL_RCC_GPIOB_CLK_ENABLE();
 
 	/*Configure GPIO pin Output Level */
-	HAL_GPIO_WritePin(GPIOA, GPIO_PIN_0 | GPIO_PIN_1, GPIO_PIN_RESET);
+	HAL_GPIO_WritePin(GPIOB,
+			GPIO_PIN_0 | GPIO_PIN_3 | GPIO_PIN_4 | GPIO_PIN_5 | GPIO_PIN_6
+					| GPIO_PIN_7 | GPIO_PIN_8, GPIO_PIN_RESET);
 
-	/*Configure GPIO pin Output Level */
-	HAL_GPIO_WritePin(GPIOB, GPIO_PIN_0, GPIO_PIN_RESET);
-
-	/*Configure GPIO pins : PA0 PA1 */
-	GPIO_InitStruct.Pin = GPIO_PIN_0 | GPIO_PIN_1;
-	GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
-	GPIO_InitStruct.Pull = GPIO_NOPULL;
-	GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-	HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
-
-	/*Configure GPIO pin : PB0 */
-	GPIO_InitStruct.Pin = GPIO_PIN_0;
+	/*Configure GPIO pins : PB0 PB3 PB4 PB5
+	 PB6 PB7 PB8 */
+	GPIO_InitStruct.Pin = GPIO_PIN_0 | GPIO_PIN_3 | GPIO_PIN_4 | GPIO_PIN_5
+			| GPIO_PIN_6 | GPIO_PIN_7 | GPIO_PIN_8;
 	GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
 	GPIO_InitStruct.Pull = GPIO_NOPULL;
 	GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
 	HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
-
-	/*Configure GPIO pin : PB10 */
-	GPIO_InitStruct.Pin = GPIO_PIN_10;
-	GPIO_InitStruct.Mode = GPIO_MODE_IT_FALLING;
-	GPIO_InitStruct.Pull = GPIO_PULLUP;
-	HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
-
-	/* EXTI interrupt init*/
-	HAL_NVIC_SetPriority(EXTI4_15_IRQn, 0, 0);
-	HAL_NVIC_EnableIRQ(EXTI4_15_IRQn);
 
 }
 
