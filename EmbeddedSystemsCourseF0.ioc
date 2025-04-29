@@ -1,6 +1,7 @@
 #MicroXplorer Configuration settings - do not modify
-ADC.ContinuousConvMode=DISABLE
-ADC.IPParameters=ContinuousConvMode
+ADC.ContinuousConvMode=ENABLE
+ADC.IPParameters=ContinuousConvMode,SamplingTime
+ADC.SamplingTime=ADC_SAMPLETIME_239CYCLES_5
 File.Version=6
 KeepUserPlacement=false
 Mcu.CPN=STM32F091CBU6

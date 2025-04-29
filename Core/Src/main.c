@@ -56,6 +56,7 @@ void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
 static void MX_ADC_Init(void);
 static void MX_TIM1_Init(void);
+/* USER CODE BEGIN PFP */
 /**
   * @brief  Conversion complete callback in non blocking mode
   * @param  hadc ADC handle
@@ -113,6 +114,8 @@ int main(void)
 	/*Welcome screen lcd */
 	lcd_puts(0, 2, "ADC Interrupt");
 	HAL_Delay(2000);
+	/* Start ADC1 Conversion in interrupt mode*/
+	HAL_ADC_Start_IT(&hadc);
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -121,8 +124,6 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-		/* Start ADC1 Conversion in interrupt mode*/
-		HAL_ADC_Start_IT(&hadc);
 		/*Method1 mapping : using left shift operation */
 		TIM1->CCR1 = (ADC_RES << 4);
 		/*Method2 mapping:
@@ -206,7 +207,7 @@ static void MX_ADC_Init(void)
   hadc.Init.EOCSelection = ADC_EOC_SINGLE_CONV;
   hadc.Init.LowPowerAutoWait = DISABLE;
   hadc.Init.LowPowerAutoPowerOff = DISABLE;
-  hadc.Init.ContinuousConvMode = DISABLE;
+  hadc.Init.ContinuousConvMode = ENABLE;
   hadc.Init.DiscontinuousConvMode = DISABLE;
   hadc.Init.ExternalTrigConv = ADC_SOFTWARE_START;
   hadc.Init.ExternalTrigConvEdge = ADC_EXTERNALTRIGCONVEDGE_NONE;
@@ -221,7 +222,7 @@ static void MX_ADC_Init(void)
   */
   sConfig.Channel = ADC_CHANNEL_0;
   sConfig.Rank = ADC_RANK_CHANNEL_NUMBER;
-  sConfig.SamplingTime = ADC_SAMPLETIME_1CYCLE_5;
+  sConfig.SamplingTime = ADC_SAMPLETIME_239CYCLES_5;
   if (HAL_ADC_ConfigChannel(&hadc, &sConfig) != HAL_OK)
   {
     Error_Handler();
