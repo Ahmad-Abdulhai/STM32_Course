@@ -47,7 +47,6 @@
 
 /* Private variables ---------------------------------------------------------*/
 ADC_HandleTypeDef hadc;
-DMA_HandleTypeDef hdma_adc;
 
 /* USER CODE BEGIN PV */
 uint16_t ADC_RES[ADC_CONVERTED_DATA_BUFFER_SIZE] = { 0 };
@@ -60,7 +59,6 @@ char buff[16] = { 0 };
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
-static void MX_DMA_Init(void);
 static void MX_ADC_Init(void);
 /* USER CODE BEGIN PFP */
 
@@ -98,14 +96,10 @@ int main(void) {
 
 	/* Initialize all configured peripherals */
 	MX_GPIO_Init();
-	MX_DMA_Init();
 	MX_ADC_Init();
 	/* USER CODE BEGIN 2 */
 	/*Start calibration for ADC*/
 	HAL_ADCEx_Calibration_Start(&hadc);
-	/*Init ADC with DMA in single conversion mode*/
-	HAL_ADC_Start_DMA(&hadc, (uint32_t*) ADC_RES,
-			ADC_CONVERTED_DATA_BUFFER_SIZE);
 	/*Init LCD*/
 	lcd_init();
 	/*Welcome screen lcd */
@@ -119,8 +113,14 @@ int main(void) {
 		/* USER CODE END WHILE */
 
 		/* USER CODE BEGIN 3 */
-		/* in single conversion mode we should triggered ADC by software starting every while loop*/
-		HAL_ADC_Start(&hadc);
+		for (uint8_t i = 0; i < 3; i++) {
+			/* in single conversion mode and multi channel we should triggered ADC for every conversion channel*/
+			HAL_ADC_Start(&hadc);
+			/* Wait for conversion to finish*/
+			HAL_ADC_PollForConversion(&hadc, 100);
+			/*Read result*/
+			ADC_RES[i] = HAL_ADC_GetValue(&hadc);
+		}
 		/*Convert ADC value to temperature in Celsius*/
 		LMtemperature = ((float) ADC_RES[0] / ADC_MAX) * (ADC_REFERNCE / LM35_GAIN);
 		/*read analog input mVoltage*/
@@ -129,7 +129,7 @@ int main(void) {
 		mVoltagePot2 = ADC_RES[2] * ((float) ADC_REFERNCE / ADC_MAX);
 		/*Clear LCD and print a new value*/
 		lcd_clear();
-		sprintf(buff, "P1=%04d P2=%04d", (uint16_t) mVoltagePot1, (uint16_t) mVoltagePot2);
+		sprintf(buff, "P1=%04d P2=%04d", (uint16_t) mVoltagePot1,(uint16_t) mVoltagePot2);
 		lcd_puts(0, 0, buff);
 		HAL_Delay(5);
 		sprintf(buff, "Temp:%0.3fC", LMtemperature);
@@ -201,10 +201,10 @@ static void MX_ADC_Init(void) {
 	hadc.Init.LowPowerAutoWait = DISABLE;
 	hadc.Init.LowPowerAutoPowerOff = DISABLE;
 	hadc.Init.ContinuousConvMode = DISABLE;
-	hadc.Init.DiscontinuousConvMode = DISABLE;
+	hadc.Init.DiscontinuousConvMode = ENABLE;
 	hadc.Init.ExternalTrigConv = ADC_SOFTWARE_START;
 	hadc.Init.ExternalTrigConvEdge = ADC_EXTERNALTRIGCONVEDGE_NONE;
-	hadc.Init.DMAContinuousRequests = ENABLE;
+	hadc.Init.DMAContinuousRequests = DISABLE;
 	hadc.Init.Overrun = ADC_OVR_DATA_PRESERVED;
 	if (HAL_ADC_Init(&hadc) != HAL_OK) {
 		Error_Handler();
@@ -235,21 +235,6 @@ static void MX_ADC_Init(void) {
 	/* USER CODE BEGIN ADC_Init 2 */
 
 	/* USER CODE END ADC_Init 2 */
-
-}
-
-/**
- * Enable DMA controller clock
- */
-static void MX_DMA_Init(void) {
-
-	/* DMA controller clock enable */
-	__HAL_RCC_DMA1_CLK_ENABLE();
-
-	/* DMA interrupt init */
-	/* DMA1_Ch1_IRQn interrupt configuration */
-	HAL_NVIC_SetPriority(DMA1_Ch1_IRQn, 0, 0);
-	HAL_NVIC_EnableIRQ(DMA1_Ch1_IRQn);
 
 }
 
