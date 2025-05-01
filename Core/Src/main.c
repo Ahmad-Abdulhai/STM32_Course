@@ -53,6 +53,7 @@ uint16_t ADC_RES[ADC_CONVERTED_DATA_BUFFER_SIZE] = { 0 };
 uint16_t mVoltagePot1 = 0.0f;
 uint16_t mVoltagePot2 = 0.0f;
 float LMtemperature = 0.0f;
+uint8_t endSingleConversionCounter = 0;
 char buff[16] = { 0 };
 /* USER CODE END PV */
 
@@ -61,7 +62,13 @@ void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
 static void MX_ADC_Init(void);
 /* USER CODE BEGIN PFP */
-
+void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef *hadc) {
+	/* Read & update The ADC Conversion Result*/
+	ADC_RES[endSingleConversionCounter] = HAL_ADC_GetValue(hadc);
+	++endSingleConversionCounter;
+	if (endSingleConversionCounter == ADC_CONVERTED_DATA_BUFFER_SIZE)
+		endSingleConversionCounter = 0;
+}
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -103,7 +110,7 @@ int main(void) {
 	/*Init LCD*/
 	lcd_init();
 	/*Welcome screen lcd */
-	lcd_puts(0, 0, "ADC POLL Mul CH");
+	lcd_puts(0, 0, "ADC INTRR Mul CH");
 	HAL_Delay(2000);
 	/* USER CODE END 2 */
 
@@ -113,14 +120,8 @@ int main(void) {
 		/* USER CODE END WHILE */
 
 		/* USER CODE BEGIN 3 */
-		for (uint8_t i = 0; i < 3; i++) {
-			/* in single conversion mode and multi channel we should triggered ADC for every conversion channel*/
-			HAL_ADC_Start(&hadc);
-			/* Wait for conversion to finish*/
-			HAL_ADC_PollForConversion(&hadc, 100);
-			/*Read result*/
-			ADC_RES[i] = HAL_ADC_GetValue(&hadc);
-		}
+		/* in single conversion mode and multi channel we should triggered ADC for every conversion channel*/
+		HAL_ADC_Start_IT(&hadc);
 		/*Convert ADC value to temperature in Celsius*/
 		LMtemperature = ((float) ADC_RES[0] / ADC_MAX) * (ADC_REFERNCE / LM35_GAIN);
 		/*read analog input mVoltage*/
