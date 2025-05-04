@@ -40,6 +40,7 @@
 
 /* Private variables ---------------------------------------------------------*/
  UART_HandleTypeDef huart2;
+DMA_HandleTypeDef hdma_usart2_tx;
 
 /* USER CODE BEGIN PV */
 /*buffer data to send it via UART2*/
@@ -51,6 +52,7 @@ uint8_t dataSent = 1;
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
+static void MX_DMA_Init(void);
 static void MX_USART2_UART_Init(void);
 /* USER CODE BEGIN PFP */
 /**
@@ -96,6 +98,7 @@ int main(void)
 
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
+  MX_DMA_Init();
   MX_USART2_UART_Init();
   /* USER CODE BEGIN 2 */
 	/*given values to the Array*/
@@ -112,8 +115,8 @@ int main(void)
     /* USER CODE BEGIN 3 */
 		/*check if sending of data finished to resends again*/
 		if (dataSent == 1) {
-			/*Transmit data Via UART2 using Interrupt mode*/
-			HAL_UART_Transmit_IT(&huart2, data, DATA_BUFFER_SIZE);
+			/*Transmit data Via UART2 using DMA[Normal] mode*/
+			HAL_UART_Transmit_DMA(&huart2, data, DATA_BUFFER_SIZE);
 			dataSent = 0;
 		}
 		/*Toggle PB0 LED on board*/
@@ -198,6 +201,22 @@ static void MX_USART2_UART_Init(void)
   /* USER CODE BEGIN USART2_Init 2 */
 
   /* USER CODE END USART2_Init 2 */
+
+}
+
+/**
+  * Enable DMA controller clock
+  */
+static void MX_DMA_Init(void)
+{
+
+  /* DMA controller clock enable */
+  __HAL_RCC_DMA1_CLK_ENABLE();
+
+  /* DMA interrupt init */
+  /* DMA1_Ch2_3_DMA2_Ch1_2_IRQn interrupt configuration */
+  HAL_NVIC_SetPriority(DMA1_Ch2_3_DMA2_Ch1_2_IRQn, 0, 0);
+  HAL_NVIC_EnableIRQ(DMA1_Ch2_3_DMA2_Ch1_2_IRQn);
 
 }
 
