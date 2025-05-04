@@ -60,9 +60,9 @@ static void MX_USART2_UART_Init(void);
  * @param huart UART handle.
  * @retval None
  */
-void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart) {
-	dataSent = 1;
-}
+//void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart) {
+//	dataSent = 1;
+//}
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -105,6 +105,9 @@ int main(void)
 	for (uint16_t i = 0; i < DATA_BUFFER_SIZE; i++) {
 		data[i] = i & (0xFF);
 	}
+
+	/*Transmit data Via UART2 using DMA[Circular] mode*/
+	HAL_UART_Transmit_DMA(&huart2, data, DATA_BUFFER_SIZE);
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -113,12 +116,7 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-		/*check if sending of data finished to resends again*/
-		if (dataSent == 1) {
-			/*Transmit data Via UART2 using DMA[Normal] mode*/
-			HAL_UART_Transmit_DMA(&huart2, data, DATA_BUFFER_SIZE);
-			dataSent = 0;
-		}
+
 		/*Toggle PB0 LED on board*/
 		HAL_GPIO_TogglePin(GPIOB, GPIO_PIN_0);
 		HAL_Delay(500);
