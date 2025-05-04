@@ -35,20 +35,15 @@
 
 /* Private macro -------------------------------------------------------------*/
 /* USER CODE BEGIN PM */
-//#define MULTI_BYTES
-
-#ifndef MULTI_BYTES
-#define ONE_BYTE
-#endif
+#define DATA_BUFFER_SIZE  10240Ul
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
 UART_HandleTypeDef huart2;
 
 /* USER CODE BEGIN PV */
-#ifdef ONE_BYTE
- uint8_t byteArray[1]= {0xFF};
-#endif
+/*buffer data to send it via UART2*/
+uint8_t data[DATA_BUFFER_SIZE];
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -56,22 +51,7 @@ void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
 static void MX_USART2_UART_Init(void);
 /* USER CODE BEGIN PFP */
-/**
- * @brief Transmit raw multi-byte value (1 to 4 bytes) over UART
- * @param pData     Pointer to the value (uint8_t, uint16_t, uint32_t)
- * @param sizeBuff  Number of bytes to send (1, 2, or 4)
- */
-void transmitValueOverUART(uint32_t value, uint8_t sizeBuff) {
-	uint8_t byteArray[4] = { 0 };  // Buffer to store up to 4 bytes
 
-	/*Copy the bytes from the input value into byteArray (LSB to MSB)*/
-	for (uint8_t i = 0; i < sizeBuff; i++) {
-		byteArray[i] = (value >> (i * 8)) & 0x000000FF;
-	}
-
-	/*Transmit the full byteArray (up to sizeBuff bytes)*/
-	HAL_UART_Transmit(&huart2, byteArray, sizeBuff, HAL_MAX_DELAY);
-}
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -108,7 +88,10 @@ int main(void) {
 	MX_GPIO_Init();
 	MX_USART2_UART_Init();
 	/* USER CODE BEGIN 2 */
-
+	/*given values to the Array*/
+	for (uint16_t i = 0; i < DATA_BUFFER_SIZE; i++) {
+		data[i] = i & (0xFF);
+	}
 	/* USER CODE END 2 */
 
 	/* Infinite loop */
@@ -117,19 +100,12 @@ int main(void) {
 		/* USER CODE END WHILE */
 
 		/* USER CODE BEGIN 3 */
-#ifdef ONE_BYTE
-	  /*Transmitting data over UART2 in Polling mode*/
-	  HAL_UART_Transmit(&huart2, byteArray,sizeof(byteArray), 1000);
-	  HAL_Delay(500);
-#endif
-
-#ifdef MULTI_BYTES
-		uint16_t adcValue = 4096;
-//	  uint32_t Counter = 0xFFFFFFFF;
-		/*Transmitting data over UART2 in Polling mode*/
-		transmitValueOverUART((uint32_t) adcValue, 4);
+		/*Transmit data Via UART2 using Polling mode*/
+		HAL_UART_Transmit(&huart2, data, DATA_BUFFER_SIZE, 1000);
+		/*Toggle PB0 LED on board*/
+		HAL_GPIO_TogglePin(GPIOB, GPIO_PIN_0);
 		HAL_Delay(500);
-#endif
+
 	}
 	/* USER CODE END 3 */
 }
