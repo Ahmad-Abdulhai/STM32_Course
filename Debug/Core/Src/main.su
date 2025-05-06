@@ -1,6 +1,6 @@
-../Core/Src/main.c:61:6:HAL_UART_RxCpltCallback	16	static
-../Core/Src/main.c:80:5:main	8	static
-../Core/Src/main.c:129:6:SystemClock_Config	112	static
-../Core/Src/main.c:172:13:MX_USART2_UART_Init	8	static
-../Core/Src/main.c:207:13:MX_GPIO_Init	48	static
-../Core/Src/main.c:235:6:Error_Handler	8	static,ignoring_inline_asm
+../Core/Src/main.c:74:6:HAL_UART_RxCpltCallback	16	static
+../Core/Src/main.c:121:7:main	8	static
+../Core/Src/main.c:164:8:SystemClock_Config	112	static
+../Core/Src/main.c:204:15:MX_USART2_UART_Init	8	static
+../Core/Src/main.c:237:15:MX_GPIO_Init	48	static
+../Core/Src/main.c:264:8:Error_Handler	8	static,ignoring_inline_asm
