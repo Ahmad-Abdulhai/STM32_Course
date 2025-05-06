@@ -61,14 +61,12 @@ static void MX_USART2_UART_Init(void);
  * @param  huart UART handle.
  * @retval None
  */
-void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
-	if (huart == &huart2) {
-		/* The DMA normal buffer is disabled after each trigger, so we need to call the Receive_IT function again at the end of the callback.*/
-		HAL_UART_Receive_DMA(&huart2, rxData,RX_DATA_BUFFER_SIZE);
-		/*Transmitting OK message after receiving 20 bytes */
-		HAL_UART_Transmit(&huart2, txData, sizeof(txData), 200);
-	}
-}
+//void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
+//	if (huart == &huart2) {
+//		/*Transmitting OK message after receiving 20 bytes */
+//		HAL_UART_Transmit(&huart2, txData, sizeof(txData), 200);
+//	}
+//}
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -107,8 +105,8 @@ int main(void)
   MX_DMA_Init();
   MX_USART2_UART_Init();
   /* USER CODE BEGIN 2 */
-  /*Received data via UART2 in DMA [NORMAL buffer] mode*/
-  	HAL_UART_Receive_DMA(&huart2, rxData,RX_DATA_BUFFER_SIZE);
+  /*Received data via UART2 in DMA [CIRCULAR buffer] mode*/
+  HAL_UART_Receive_DMA(&huart2, rxData,RX_DATA_BUFFER_SIZE);
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -117,7 +115,7 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-		/*Toggle PC13 LED on board*/
+		/*Toggle PB0 LED on board*/
 		HAL_GPIO_TogglePin(GPIOB, GPIO_PIN_0);
 		HAL_Delay(500);
 	}
