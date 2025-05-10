@@ -21,7 +21,10 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-#include <stdio.h>
+#include "ssd1306.h"
+#include "fonts.h"
+#include "horse_anim.h"
+#include "stdio.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -35,13 +38,12 @@
 
 /* Private macro -------------------------------------------------------------*/
 /* USER CODE BEGIN PM */
-#define MAX_ADDRESS_DEVICES_LENGTH  127U
+/*SSD1306_HEIGHT*/
+#define OLED_HEIGHT (uint8_t) 64
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
 I2C_HandleTypeDef hi2c1;
-
-UART_HandleTypeDef huart2;
 
 /* USER CODE BEGIN PV */
 
@@ -51,37 +53,9 @@ UART_HandleTypeDef huart2;
 void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
 static void MX_I2C1_Init(void);
-static void MX_USART2_UART_Init(void);
 /* USER CODE BEGIN PFP */
-/*To make printf() work over UART in STM32, we override(Redirected to UART)*/
-int _write(int file, char *ptr, int len) {
-	HAL_UART_Transmit(&huart2, (uint8_t*) ptr, len, 100);
-	return len;
-}
-/**
- * @brief Scans the I2C1 bus for connected devices.
- */
-void I2C_Scan(void) {
-
-	printf("Scanning I2C1 Bus...\r\n");
-	uint8_t address;
-	HAL_StatusTypeDef result;
-	uint8_t devicesFound = 0;
-
-	for (address = 0; address <= MAX_ADDRESS_DEVICES_LENGTH; address++) {
-		/*Send a test transmission to each device address*/
-		result = HAL_I2C_IsDeviceReady(&hi2c1, address << 1, 1, 10);
-
-		if (result == HAL_OK) {
-			printf("Device found at address: 0x%02X\r\n", address);
-			devicesFound++;
-		}
-	}
-	if (devicesFound == 0) {
-		printf("No I2C devices found!\r\n");
-	}
-	printf("--------------------------\r\n");
-}
+void GradualFillScreen(void);
+void HorseAnimation(void);
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -90,193 +64,299 @@ void I2C_Scan(void) {
 /* USER CODE END 0 */
 
 /**
- * @brief  The application entry point.
- * @retval int
- */
-int main(void) {
-	/* USER CODE BEGIN 1 */
+  * @brief  The application entry point.
+  * @retval int
+  */
+int main(void)
+{
+  /* USER CODE BEGIN 1 */
 
-	/* USER CODE END 1 */
+  /* USER CODE END 1 */
 
-	/* MCU Configuration--------------------------------------------------------*/
+  /* MCU Configuration--------------------------------------------------------*/
 
-	/* Reset of all peripherals, Initializes the Flash interface and the Systick. */
-	HAL_Init();
+  /* Reset of all peripherals, Initializes the Flash interface and the Systick. */
+  HAL_Init();
 
-	/* USER CODE BEGIN Init */
+  /* USER CODE BEGIN Init */
 
-	/* USER CODE END Init */
+  /* USER CODE END Init */
 
-	/* Configure the system clock */
-	SystemClock_Config();
+  /* Configure the system clock */
+  SystemClock_Config();
 
-	/* USER CODE BEGIN SysInit */
+  /* USER CODE BEGIN SysInit */
 
-	/* USER CODE END SysInit */
+  /* USER CODE END SysInit */
 
-	/* Initialize all configured peripherals */
-	MX_GPIO_Init();
-	MX_I2C1_Init();
-	MX_USART2_UART_Init();
-	/* USER CODE BEGIN 2 */
-	printf("Starting I2C Scan...\r\n");
-	/*Delay to allow devices to power up*/
-	HAL_Delay(1000);
-	/* USER CODE END 2 */
+  /* Initialize all configured peripherals */
+  MX_GPIO_Init();
+  MX_I2C1_Init();
+  /* USER CODE BEGIN 2 */
+	 /*Initialise the display*/
+	SSD1306_Init();
+	/*goto 0, 10 coordinate*/
+	SSD1306_GotoXY(0, 10);
+	/*print Hello*/
+	SSD1306_Puts("HELLO STM32", &Font_11x18, 1);
+	SSD1306_UpdateScreen(); // update screen
+	HAL_Delay(2000);
+	/*Run the effect*/
+	GradualFillScreen();
+  /* USER CODE END 2 */
 
-	/* Infinite loop */
-	/* USER CODE BEGIN WHILE */
+  /* Infinite loop */
+  /* USER CODE BEGIN WHILE */
 	while (1) {
-		/* USER CODE END WHILE */
+    /* USER CODE END WHILE */
 
-		/* USER CODE BEGIN 3 */
-		/*Scan the bus*/
-		I2C_Scan();
-		/*Delay before the next scan*/
-		HAL_Delay(5000);
+    /* USER CODE BEGIN 3 */
+		/*Run horse animation*/
+	HorseAnimation();
 	}
-	/* USER CODE END 3 */
+  /* USER CODE END 3 */
+}
+/**
+ * @brief Gradually fills the OLED screen with different patterns.
+ *
+ * This function creates a gradual fill effect on the SSD1306 OLED display by:
+ * 1. Drawing horizontal lines from top to bottom.
+ * 2. Expanding a filled rectangle from the center outward.
+ * 3. Drawing a growing triangle from the bottom up.
+ * 4. Expanding a filled circle from the center outward.
+ */
+void GradualFillScreen(void) {
+	/*Clear the screen initially*/
+	SSD1306_Clear();
+	SSD1306_UpdateScreen();
+
+	HAL_Delay(500);
+
+	/*Step 1: Draw horizontal lines from top to bottom*/
+	for (uint16_t y = 0; y < OLED_HEIGHT; y += 4) {
+		SSD1306_DrawLine(0, y, 127, y, SSD1306_COLOR_WHITE);
+		SSD1306_UpdateScreen();
+		/* Small delay to see the effect*/
+		HAL_Delay(50);
+	}
+	/* Pause for effect*/
+	HAL_Delay(500);
+
+	/*Step 2: Expanding filled rectangle from the center*/
+	SSD1306_Clear(); //Clear screen to update
+	for (uint16_t size = 0; size < OLED_HEIGHT ; size += 4) {
+		SSD1306_DrawFilledRectangle(OLED_HEIGHT - size / 2, OLED_HEIGHT/2 - size / 2, size, size,
+				SSD1306_COLOR_WHITE);
+		SSD1306_UpdateScreen();
+		HAL_Delay(50);
+	}
+
+	HAL_Delay(500);
+
+	/*Step 3: Expanding triangle from bottom*/
+	SSD1306_Clear(); //Clear screen to update
+	for (uint16_t height = 0; height < OLED_HEIGHT; height += 4) {
+		SSD1306_DrawTriangle(OLED_HEIGHT, 0, 0, height, 127, height,
+				SSD1306_COLOR_WHITE);
+		SSD1306_UpdateScreen();
+		HAL_Delay(50);
+	}
+	/* Pause for effect*/
+	HAL_Delay(500);
+
+	/*Step 4: Expanding filled circle from center*/
+	SSD1306_Clear();
+	for (uint16_t r = 0; r < OLED_HEIGHT/2; r += 2) {
+		SSD1306_DrawFilledCircle( OLED_HEIGHT, OLED_HEIGHT/2, r, SSD1306_COLOR_WHITE);
+		SSD1306_UpdateScreen();
+		HAL_Delay(50);
+	}
+	/*scroll entire screen (Page0 to Page7) right*/
+	SSD1306_ScrollRight(0x00, 0x07);
+	/*Delay to see the scrolling*/
+	HAL_Delay(5000);
+	/*Stop Scrolling*/
+	SSD1306_Stopscroll();
+	/*scroll entire screen (Page0 to Page7) right*/
+	SSD1306_ScrollLeft(0x00, 0x07);
+	/*Delay to see the scrolling*/
+	HAL_Delay(5000);
+	/*Stop Scrolling*/
+	SSD1306_Stopscroll();
+	HAL_Delay(100); // Final pause before clearing the screen
+}
+/**
+ * @brief Displays a horse running animation on the SSD1306 OLED.
+ *
+ * This function sequentially displays 10 different horse bitmaps
+ * (horse1 to horse10) to create a smooth running animation.
+ * Each frame is displayed briefly before clearing the screen and updating it.
+ *
+ * Steps:
+ * 1. Clears the display.
+ * 2. Draws the horse frame from the bitmap array.
+ * 3. Updates the OLED to show the frame.
+ * 4. Repeats for all frames in sequence.
+ *
+ * Note: Ensure `horse1` to `horse10` bitmaps are correctly defined in the code.
+ */
+void HorseAnimation(void) {
+	//// HORSE ANIMATION START //////
+
+	SSD1306_Clear();
+	SSD1306_DrawBitmap(0, 0, horse1, 128, 64, 1);
+	SSD1306_UpdateScreen();
+
+	SSD1306_Clear();
+	SSD1306_DrawBitmap(0, 0, horse2, 128, 64, 1);
+	SSD1306_UpdateScreen();
+
+	SSD1306_Clear();
+	SSD1306_DrawBitmap(0, 0, horse3, 128, 64, 1);
+	SSD1306_UpdateScreen();
+
+	SSD1306_Clear();
+	SSD1306_DrawBitmap(0, 0, horse4, 128, 64, 1);
+	SSD1306_UpdateScreen();
+
+	SSD1306_Clear();
+	SSD1306_DrawBitmap(0, 0, horse5, 128, 64, 1);
+	SSD1306_UpdateScreen();
+
+	SSD1306_Clear();
+	SSD1306_DrawBitmap(0, 0, horse6, 128, 64, 1);
+	SSD1306_UpdateScreen();
+
+	SSD1306_Clear();
+	SSD1306_DrawBitmap(0, 0, horse7, 128, 64, 1);
+	SSD1306_UpdateScreen();
+
+	SSD1306_Clear();
+	SSD1306_DrawBitmap(0, 0, horse8, 128, 64, 1);
+	SSD1306_UpdateScreen();
+
+	SSD1306_Clear();
+	SSD1306_DrawBitmap(0, 0, horse9, 128, 64, 1);
+	SSD1306_UpdateScreen();
+
+	SSD1306_Clear();
+	SSD1306_DrawBitmap(0, 0, horse10, 128, 64, 1);
+	SSD1306_UpdateScreen();
+
+	//// HORSE ANIMATION ENDS //////
+}
+/**
+  * @brief System Clock Configuration
+  * @retval None
+  */
+void SystemClock_Config(void)
+{
+  RCC_OscInitTypeDef RCC_OscInitStruct = {0};
+  RCC_ClkInitTypeDef RCC_ClkInitStruct = {0};
+  RCC_PeriphCLKInitTypeDef PeriphClkInit = {0};
+
+  /** Initializes the RCC Oscillators according to the specified parameters
+  * in the RCC_OscInitTypeDef structure.
+  */
+  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSI;
+  RCC_OscInitStruct.HSIState = RCC_HSI_ON;
+  RCC_OscInitStruct.HSICalibrationValue = RCC_HSICALIBRATION_DEFAULT;
+  RCC_OscInitStruct.PLL.PLLState = RCC_PLL_NONE;
+  if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK)
+  {
+    Error_Handler();
+  }
+
+  /** Initializes the CPU, AHB and APB buses clocks
+  */
+  RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK|RCC_CLOCKTYPE_SYSCLK
+                              |RCC_CLOCKTYPE_PCLK1;
+  RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_HSI;
+  RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV1;
+  RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV1;
+
+  if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_0) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  PeriphClkInit.PeriphClockSelection = RCC_PERIPHCLK_I2C1;
+  PeriphClkInit.I2c1ClockSelection = RCC_I2C1CLKSOURCE_HSI;
+  if (HAL_RCCEx_PeriphCLKConfig(&PeriphClkInit) != HAL_OK)
+  {
+    Error_Handler();
+  }
 }
 
 /**
- * @brief System Clock Configuration
- * @retval None
- */
-void SystemClock_Config(void) {
-	RCC_OscInitTypeDef RCC_OscInitStruct = { 0 };
-	RCC_ClkInitTypeDef RCC_ClkInitStruct = { 0 };
-	RCC_PeriphCLKInitTypeDef PeriphClkInit = { 0 };
+  * @brief I2C1 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_I2C1_Init(void)
+{
 
-	/** Initializes the RCC Oscillators according to the specified parameters
-	 * in the RCC_OscInitTypeDef structure.
-	 */
-	RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSI;
-	RCC_OscInitStruct.HSIState = RCC_HSI_ON;
-	RCC_OscInitStruct.HSICalibrationValue = RCC_HSICALIBRATION_DEFAULT;
-	RCC_OscInitStruct.PLL.PLLState = RCC_PLL_NONE;
-	if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK) {
-		Error_Handler();
-	}
+  /* USER CODE BEGIN I2C1_Init 0 */
 
-	/** Initializes the CPU, AHB and APB buses clocks
-	 */
-	RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK | RCC_CLOCKTYPE_SYSCLK
-			| RCC_CLOCKTYPE_PCLK1;
-	RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_HSI;
-	RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV1;
-	RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV1;
+  /* USER CODE END I2C1_Init 0 */
 
-	if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_0) != HAL_OK) {
-		Error_Handler();
-	}
-	PeriphClkInit.PeriphClockSelection = RCC_PERIPHCLK_USART2
-			| RCC_PERIPHCLK_I2C1;
-	PeriphClkInit.Usart2ClockSelection = RCC_USART2CLKSOURCE_PCLK1;
-	PeriphClkInit.I2c1ClockSelection = RCC_I2C1CLKSOURCE_HSI;
-	if (HAL_RCCEx_PeriphCLKConfig(&PeriphClkInit) != HAL_OK) {
-		Error_Handler();
-	}
-}
+  /* USER CODE BEGIN I2C1_Init 1 */
 
-/**
- * @brief I2C1 Initialization Function
- * @param None
- * @retval None
- */
-static void MX_I2C1_Init(void) {
+  /* USER CODE END I2C1_Init 1 */
+  hi2c1.Instance = I2C1;
+  hi2c1.Init.Timing = 0x0000020B;
+  hi2c1.Init.OwnAddress1 = 0;
+  hi2c1.Init.AddressingMode = I2C_ADDRESSINGMODE_7BIT;
+  hi2c1.Init.DualAddressMode = I2C_DUALADDRESS_DISABLE;
+  hi2c1.Init.OwnAddress2 = 0;
+  hi2c1.Init.OwnAddress2Masks = I2C_OA2_NOMASK;
+  hi2c1.Init.GeneralCallMode = I2C_GENERALCALL_DISABLE;
+  hi2c1.Init.NoStretchMode = I2C_NOSTRETCH_DISABLE;
+  if (HAL_I2C_Init(&hi2c1) != HAL_OK)
+  {
+    Error_Handler();
+  }
 
-	/* USER CODE BEGIN I2C1_Init 0 */
+  /** Configure Analogue filter
+  */
+  if (HAL_I2CEx_ConfigAnalogFilter(&hi2c1, I2C_ANALOGFILTER_ENABLE) != HAL_OK)
+  {
+    Error_Handler();
+  }
 
-	/* USER CODE END I2C1_Init 0 */
+  /** Configure Digital filter
+  */
+  if (HAL_I2CEx_ConfigDigitalFilter(&hi2c1, 0) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN I2C1_Init 2 */
 
-	/* USER CODE BEGIN I2C1_Init 1 */
-
-	/* USER CODE END I2C1_Init 1 */
-	hi2c1.Instance = I2C1;
-	hi2c1.Init.Timing = 0x0000020B;
-	hi2c1.Init.OwnAddress1 = 0;
-	hi2c1.Init.AddressingMode = I2C_ADDRESSINGMODE_7BIT;
-	hi2c1.Init.DualAddressMode = I2C_DUALADDRESS_DISABLE;
-	hi2c1.Init.OwnAddress2 = 0;
-	hi2c1.Init.OwnAddress2Masks = I2C_OA2_NOMASK;
-	hi2c1.Init.GeneralCallMode = I2C_GENERALCALL_DISABLE;
-	hi2c1.Init.NoStretchMode = I2C_NOSTRETCH_DISABLE;
-	if (HAL_I2C_Init(&hi2c1) != HAL_OK) {
-		Error_Handler();
-	}
-
-	/** Configure Analogue filter
-	 */
-	if (HAL_I2CEx_ConfigAnalogFilter(&hi2c1, I2C_ANALOGFILTER_ENABLE)
-			!= HAL_OK) {
-		Error_Handler();
-	}
-
-	/** Configure Digital filter
-	 */
-	if (HAL_I2CEx_ConfigDigitalFilter(&hi2c1, 0) != HAL_OK) {
-		Error_Handler();
-	}
-	/* USER CODE BEGIN I2C1_Init 2 */
-
-	/* USER CODE END I2C1_Init 2 */
+  /* USER CODE END I2C1_Init 2 */
 
 }
 
 /**
- * @brief USART2 Initialization Function
- * @param None
- * @retval None
- */
-static void MX_USART2_UART_Init(void) {
+  * @brief GPIO Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_GPIO_Init(void)
+{
+  GPIO_InitTypeDef GPIO_InitStruct = {0};
 
-	/* USER CODE BEGIN USART2_Init 0 */
+  /* GPIO Ports Clock Enable */
+  __HAL_RCC_GPIOB_CLK_ENABLE();
+  __HAL_RCC_GPIOA_CLK_ENABLE();
 
-	/* USER CODE END USART2_Init 0 */
+  /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_0, GPIO_PIN_RESET);
 
-	/* USER CODE BEGIN USART2_Init 1 */
-
-	/* USER CODE END USART2_Init 1 */
-	huart2.Instance = USART2;
-	huart2.Init.BaudRate = 115200;
-	huart2.Init.WordLength = UART_WORDLENGTH_8B;
-	huart2.Init.StopBits = UART_STOPBITS_1;
-	huart2.Init.Parity = UART_PARITY_NONE;
-	huart2.Init.Mode = UART_MODE_TX_RX;
-	huart2.Init.HwFlowCtl = UART_HWCONTROL_NONE;
-	huart2.Init.OverSampling = UART_OVERSAMPLING_16;
-	huart2.Init.OneBitSampling = UART_ONE_BIT_SAMPLE_DISABLE;
-	huart2.AdvancedInit.AdvFeatureInit = UART_ADVFEATURE_NO_INIT;
-	if (HAL_UART_Init(&huart2) != HAL_OK) {
-		Error_Handler();
-	}
-	/* USER CODE BEGIN USART2_Init 2 */
-
-	/* USER CODE END USART2_Init 2 */
-
-}
-
-/**
- * @brief GPIO Initialization Function
- * @param None
- * @retval None
- */
-static void MX_GPIO_Init(void) {
-	GPIO_InitTypeDef GPIO_InitStruct = { 0 };
-
-	/* GPIO Ports Clock Enable */
-	__HAL_RCC_GPIOA_CLK_ENABLE();
-	__HAL_RCC_GPIOB_CLK_ENABLE();
-
-	/*Configure GPIO pin Output Level */
-	HAL_GPIO_WritePin(GPIOB, GPIO_PIN_0, GPIO_PIN_RESET);
-
-	/*Configure GPIO pin : PB0 */
-	GPIO_InitStruct.Pin = GPIO_PIN_0;
-	GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
-	GPIO_InitStruct.Pull = GPIO_NOPULL;
-	GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-	HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
+  /*Configure GPIO pin : PB0 */
+  GPIO_InitStruct.Pin = GPIO_PIN_0;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
 }
 
@@ -285,16 +365,17 @@ static void MX_GPIO_Init(void) {
 /* USER CODE END 4 */
 
 /**
- * @brief  This function is executed in case of error occurrence.
- * @retval None
- */
-void Error_Handler(void) {
-	/* USER CODE BEGIN Error_Handler_Debug */
+  * @brief  This function is executed in case of error occurrence.
+  * @retval None
+  */
+void Error_Handler(void)
+{
+  /* USER CODE BEGIN Error_Handler_Debug */
 	/* User can add his own implementation to report the HAL error return state */
 	__disable_irq();
 	while (1) {
 	}
-	/* USER CODE END Error_Handler_Debug */
+  /* USER CODE END Error_Handler_Debug */
 }
 
 #ifdef  USE_FULL_ASSERT
