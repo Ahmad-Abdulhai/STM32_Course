@@ -35,10 +35,31 @@
 
 /* Private macro -------------------------------------------------------------*/
 /* USER CODE BEGIN PM */
+//#define DAC_80501
 
+#ifndef DAC_80501
+#define ADS_1115
+#endif
+
+#ifdef DAC_80501
+
+/* DACx0501 Address Byte*/
+#define DAC_ADDRESS  (uint8_t)(0x48 << 1)  // Shifted for HAL I2C functions
+/*DAC Data Register Address(Command Byte Address)*/
+#define DAC_REGISTER (uint8_t)0x08
+
+#endif
+
+#ifdef ADS_1115
+/*ADS1115 I2C 7-bit address shifted for HAL*/
+#define ADS111x_ADDRESS  (0x48 << 1)
+/*Conversion Register (Register map)*/
+#define ADS111x_CONVERSION_REG  0x00
+#endif
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
+I2C_HandleTypeDef hi2c1;
 
 /* USER CODE BEGIN PV */
 
@@ -46,8 +67,85 @@
 
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
+static void MX_GPIO_Init(void);
+static void MX_I2C1_Init(void);
 /* USER CODE BEGIN PFP */
+#ifdef DAC_80501
+/**
+ * @brief Writes a 16-bit value to the DAC over I2C.
+ *
+ * This function sends a 16-bit digital value to a specified register
+ * in the DAC via the I2C bus. The value is split into two bytes:
+ * - Most Significant Byte (MSB)
+ * - Least Significant Byte (LSB)
+ *
+ * @param value: The 16-bit digital value to write to the DAC (0x0000 to 0xFFFF).
+ *
+ * The data format sent over I2C:
+ * ------------------------------------------------
+ * | Register Address | MSB (High Byte) | LSB (Low Byte) |
+ * ------------------------------------------------
+ */
+void DAC_WriteValue(uint16_t value)
+{
+    uint8_t data[3];
 
+    /*Step 1: Set the target register address*/
+    data[0] = DAC_REGISTER;       // Register address
+    /*Step 2: Extract the upper 8 bits (MSB) from the 16-bit value*/
+    data[1] = (value >> 8) & 0xFF;
+    /*Step 3: Extract the lower 8 bits (LSB) from the 16-bit value*/
+    data[2] = value & 0xFF;
+/*
+ *   Step 4: Transmit the 3-byte packet to the DAC over I2C
+            - DAC_ADDRESS: I2C address of the DAC
+            - data: Pointer to the data buffer
+            - 3: Number of bytes to send (1 Register + 2 Data)
+            - HAL_MAX_DELAY: Maximum time to wait for the transmission
+ * */
+    HAL_I2C_Master_Transmit(&hi2c1, DAC_ADDRESS, data, 3, HAL_MAX_DELAY);
+}
+#endif
+#ifdef ADS_1115
+/**
+ * @brief Reads a 16-bit ADC conversion value from the ADS111x over I2C.
+ *
+ * This function communicates with the ADS111x ADC to:
+ * 1. Select the **Conversion Register** (contains the latest ADC value).
+ * 2. Read **2 bytes (16 bits)** of conversion data over the I2C bus.
+ * 3. Combine the two bytes (MSB + LSB) into a single 16-bit result.
+ *
+ * @return uint16_t - The 16-bit ADC conversion result.
+ */
+uint16_t ADS111x_ReadADC(void)
+{
+    uint8_t reg = ADS111x_CONVERSION_REG; // Conversion register address
+    uint8_t adcData[2];                   // Buffer to hold the two received bytes
+    uint16_t result;                      // Variable to store the final result
+
+    // *Step 1: Request the Conversion Register
+    // Sends the address of the conversion register to the ADS111x
+    // - reg: Register address to read from
+    // - 1: Number of bytes to send
+    // - HAL_MAX_DELAY: Wait indefinitely if needed
+    HAL_I2C_Master_Transmit(&hi2c1, ADS111x_ADDRESS, &reg, 1, HAL_MAX_DELAY);
+
+    // *Step 2: Read 2 bytes from the Conversion Register
+    // Receives the 16-bit conversion value (MSB first, then LSB)
+    // - adcData: Buffer to hold received data
+    // - 2: Number of bytes to read
+    // - HAL_MAX_DELAY: Wait indefinitely if needed
+    HAL_I2C_Master_Receive(&hi2c1, ADS111x_ADDRESS, adcData, 2, HAL_MAX_DELAY);
+
+    // *Step 3: Combine MSB and LSB into a single 16-bit result
+    // - adcData[0] contains the Most Significant Byte (MSB)
+    // - adcData[1] contains the Least Significant Byte (LSB)
+    result = (adcData[0] << 8) | adcData[1];
+
+    // *Step 4: Return the final 16-bit result
+    return result;
+}
+#endif
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -82,6 +180,8 @@ int main(void)
   /* USER CODE END SysInit */
 
   /* Initialize all configured peripherals */
+  MX_GPIO_Init();
+  MX_I2C1_Init();
   /* USER CODE BEGIN 2 */
 
   /* USER CODE END 2 */
@@ -93,6 +193,17 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
+#ifdef DAC_80501
+	  /*Set value for DAC
+	   * DAC_value = (Desired Voltage / Vref) * 0xFFFF
+	   * */
+	  uint16_t dacValue =0x4CCD;
+	  DAC_WriteValue(dacValue);
+#endif
+#ifdef ADS_1115
+	  /*Read the raw ADC value*/
+	  uint16_t adcValue = ADS111x_ReadADC();
+#endif
   }
   /* USER CODE END 3 */
 }
@@ -105,6 +216,7 @@ void SystemClock_Config(void)
 {
   RCC_OscInitTypeDef RCC_OscInitStruct = {0};
   RCC_ClkInitTypeDef RCC_ClkInitStruct = {0};
+  RCC_PeriphCLKInitTypeDef PeriphClkInit = {0};
 
   /** Initializes the RCC Oscillators according to the specified parameters
   * in the RCC_OscInitTypeDef structure.
@@ -130,6 +242,85 @@ void SystemClock_Config(void)
   {
     Error_Handler();
   }
+  PeriphClkInit.PeriphClockSelection = RCC_PERIPHCLK_I2C1;
+  PeriphClkInit.I2c1ClockSelection = RCC_I2C1CLKSOURCE_HSI;
+  if (HAL_RCCEx_PeriphCLKConfig(&PeriphClkInit) != HAL_OK)
+  {
+    Error_Handler();
+  }
+}
+
+/**
+  * @brief I2C1 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_I2C1_Init(void)
+{
+
+  /* USER CODE BEGIN I2C1_Init 0 */
+
+  /* USER CODE END I2C1_Init 0 */
+
+  /* USER CODE BEGIN I2C1_Init 1 */
+
+  /* USER CODE END I2C1_Init 1 */
+  hi2c1.Instance = I2C1;
+  hi2c1.Init.Timing = 0x0000020B;
+  hi2c1.Init.OwnAddress1 = 0;
+  hi2c1.Init.AddressingMode = I2C_ADDRESSINGMODE_7BIT;
+  hi2c1.Init.DualAddressMode = I2C_DUALADDRESS_DISABLE;
+  hi2c1.Init.OwnAddress2 = 0;
+  hi2c1.Init.OwnAddress2Masks = I2C_OA2_NOMASK;
+  hi2c1.Init.GeneralCallMode = I2C_GENERALCALL_DISABLE;
+  hi2c1.Init.NoStretchMode = I2C_NOSTRETCH_DISABLE;
+  if (HAL_I2C_Init(&hi2c1) != HAL_OK)
+  {
+    Error_Handler();
+  }
+
+  /** Configure Analogue filter
+  */
+  if (HAL_I2CEx_ConfigAnalogFilter(&hi2c1, I2C_ANALOGFILTER_ENABLE) != HAL_OK)
+  {
+    Error_Handler();
+  }
+
+  /** Configure Digital filter
+  */
+  if (HAL_I2CEx_ConfigDigitalFilter(&hi2c1, 0) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN I2C1_Init 2 */
+
+  /* USER CODE END I2C1_Init 2 */
+
+}
+
+/**
+  * @brief GPIO Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_GPIO_Init(void)
+{
+  GPIO_InitTypeDef GPIO_InitStruct = {0};
+
+  /* GPIO Ports Clock Enable */
+  __HAL_RCC_GPIOB_CLK_ENABLE();
+  __HAL_RCC_GPIOA_CLK_ENABLE();
+
+  /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_0, GPIO_PIN_RESET);
+
+  /*Configure GPIO pin : PB0 */
+  GPIO_InitStruct.Pin = GPIO_PIN_0;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
+
 }
 
 /* USER CODE BEGIN 4 */
