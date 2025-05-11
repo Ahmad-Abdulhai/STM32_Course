@@ -28,7 +28,8 @@ Core/Src/main.o: ../Core/Src/main.c ../Core/Inc/main.h \
  D:/HEXABITZ_COURSE/RepoEmbeddedSystemsCourse/OLED/Inc/fonts.h \
  D:/HEXABITZ_COURSE/RepoEmbeddedSystemsCourse/MPU6050/Inc/mpu6050.h \
  D:/HEXABITZ_COURSE/RepoEmbeddedSystemsCourse/OLED/Inc/fonts.h \
- D:/HEXABITZ_COURSE/RepoEmbeddedSystemsCourse/OLED/Inc/horse_anim.h
+ D:/HEXABITZ_COURSE/RepoEmbeddedSystemsCourse/OLED/Inc/horse_anim.h \
+ D:/HEXABITZ_COURSE/RepoEmbeddedSystemsCourse/OLED/Inc/LogoHexa.h
 ../Core/Inc/main.h:
 ../Drivers/STM32F0xx_HAL_Driver/Inc/stm32f0xx_hal.h:
 ../Core/Inc/stm32f0xx_hal_conf.h:
@@ -60,3 +61,4 @@ D:/HEXABITZ_COURSE/RepoEmbeddedSystemsCourse/OLED/Inc/fonts.h:
 D:/HEXABITZ_COURSE/RepoEmbeddedSystemsCourse/MPU6050/Inc/mpu6050.h:
 D:/HEXABITZ_COURSE/RepoEmbeddedSystemsCourse/OLED/Inc/fonts.h:
 D:/HEXABITZ_COURSE/RepoEmbeddedSystemsCourse/OLED/Inc/horse_anim.h:
+D:/HEXABITZ_COURSE/RepoEmbeddedSystemsCourse/OLED/Inc/LogoHexa.h:
