@@ -1,5 +1,6 @@
-Core/Src/main.o: ../Core/Src/main.c ../Core/Inc/main.h \
- ../Drivers/STM32F0xx_HAL_Driver/Inc/stm32f0xx_hal.h \
+MPU6050/Src/mpu6050.o: ../MPU6050/Src/mpu6050.c \
+ D:/HEXABITZ_COURSE/RepoEmbeddedSystemsCourse/MPU6050/Inc/mpu6050.h \
+ ../Core/Inc/main.h ../Drivers/STM32F0xx_HAL_Driver/Inc/stm32f0xx_hal.h \
  ../Core/Inc/stm32f0xx_hal_conf.h \
  ../Drivers/STM32F0xx_HAL_Driver/Inc/stm32f0xx_hal_rcc.h \
  ../Drivers/STM32F0xx_HAL_Driver/Inc/stm32f0xx_hal_def.h \
@@ -23,12 +24,8 @@ Core/Src/main.o: ../Core/Src/main.c ../Core/Inc/main.h \
  ../Drivers/STM32F0xx_HAL_Driver/Inc/stm32f0xx_hal_i2c.h \
  ../Drivers/STM32F0xx_HAL_Driver/Inc/stm32f0xx_hal_i2c_ex.h \
  ../Drivers/STM32F0xx_HAL_Driver/Inc/stm32f0xx_hal_pwr.h \
- ../Drivers/STM32F0xx_HAL_Driver/Inc/stm32f0xx_hal_pwr_ex.h \
- D:/HEXABITZ_COURSE/RepoEmbeddedSystemsCourse/OLED/Inc/ssd1306.h \
- D:/HEXABITZ_COURSE/RepoEmbeddedSystemsCourse/OLED/Inc/fonts.h \
- D:/HEXABITZ_COURSE/RepoEmbeddedSystemsCourse/MPU6050/Inc/mpu6050.h \
- D:/HEXABITZ_COURSE/RepoEmbeddedSystemsCourse/OLED/Inc/fonts.h \
- D:/HEXABITZ_COURSE/RepoEmbeddedSystemsCourse/OLED/Inc/horse_anim.h
+ ../Drivers/STM32F0xx_HAL_Driver/Inc/stm32f0xx_hal_pwr_ex.h
+D:/HEXABITZ_COURSE/RepoEmbeddedSystemsCourse/MPU6050/Inc/mpu6050.h:
 ../Core/Inc/main.h:
 ../Drivers/STM32F0xx_HAL_Driver/Inc/stm32f0xx_hal.h:
 ../Core/Inc/stm32f0xx_hal_conf.h:
@@ -55,8 +52,3 @@ Core/Src/main.o: ../Core/Src/main.c ../Core/Inc/main.h \
 ../Drivers/STM32F0xx_HAL_Driver/Inc/stm32f0xx_hal_i2c_ex.h:
 ../Drivers/STM32F0xx_HAL_Driver/Inc/stm32f0xx_hal_pwr.h:
 ../Drivers/STM32F0xx_HAL_Driver/Inc/stm32f0xx_hal_pwr_ex.h:
-D:/HEXABITZ_COURSE/RepoEmbeddedSystemsCourse/OLED/Inc/ssd1306.h:
-D:/HEXABITZ_COURSE/RepoEmbeddedSystemsCourse/OLED/Inc/fonts.h:
-D:/HEXABITZ_COURSE/RepoEmbeddedSystemsCourse/MPU6050/Inc/mpu6050.h:
-D:/HEXABITZ_COURSE/RepoEmbeddedSystemsCourse/OLED/Inc/fonts.h:
-D:/HEXABITZ_COURSE/RepoEmbeddedSystemsCourse/OLED/Inc/horse_anim.h:
