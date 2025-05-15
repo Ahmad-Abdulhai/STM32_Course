@@ -24,5 +24,4 @@ SUBDIRS := \
 Core/Src \
 Core/Startup \
 Drivers/STM32F0xx_HAL_Driver/Src \
-OLED/Src \
 
