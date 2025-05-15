@@ -9,6 +9,7 @@ RM := rm -rf
 
 # All of the sources participating in the build are defined here
 -include sources.mk
+-include OLED/Src/subdir.mk
 -include Drivers/STM32F0xx_HAL_Driver/Src/subdir.mk
 -include Core/Startup/subdir.mk
 -include Core/Src/subdir.mk
@@ -60,8 +61,8 @@ all: main-build
 main-build: EmbeddedSystemsCourseF0.elf secondary-outputs
 
 # Tool invocations
-EmbeddedSystemsCourseF0.elf EmbeddedSystemsCourseF0.map: $(OBJS) $(USER_OBJS) D:\HEXABITZ_COURSE\RepoProjectsCourseEmbeddedSystems\STM32F091CBUX_FLASH.ld makefile objects.list $(OPTIONAL_TOOL_DEPS)
-	arm-none-eabi-gcc -o "EmbeddedSystemsCourseF0.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m0 -T"D:\HEXABITZ_COURSE\RepoProjectsCourseEmbeddedSystems\STM32F091CBUX_FLASH.ld" --specs=nosys.specs -Wl,-Map="EmbeddedSystemsCourseF0.map" -Wl,--gc-sections -static --specs=nano.specs -mfloat-abi=soft -mthumb -Wl,--start-group -lc -lm -Wl,--end-group
+EmbeddedSystemsCourseF0.elf EmbeddedSystemsCourseF0.map: $(OBJS) $(USER_OBJS) D:\HEXABITZ_COURSE\RepoEmbeddedSystemsCourse\STM32F091CBUX_FLASH.ld makefile objects.list $(OPTIONAL_TOOL_DEPS)
+	arm-none-eabi-gcc -o "EmbeddedSystemsCourseF0.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m0 -T"D:\HEXABITZ_COURSE\RepoEmbeddedSystemsCourse\STM32F091CBUX_FLASH.ld" --specs=nosys.specs -Wl,-Map="EmbeddedSystemsCourseF0.map" -Wl,--gc-sections -static --specs=nano.specs -mfloat-abi=soft -mthumb -u _printf_float -u _scanf_float -Wl,--start-group -lc -lm -Wl,--end-group
 	@echo 'Finished building target: $@'
 	@echo ' '
 
