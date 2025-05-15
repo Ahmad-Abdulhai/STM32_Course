@@ -84,8 +84,25 @@ static void MX_ADC_Init(void);
 void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef *hadc) {
     	/*Read ADC result*/
     	ADC_Res = HAL_ADC_GetValue(hadc);
-        /*Send ADC value via SPI*/
-    	SpiStatus_t= HAL_SPI_Transmit(&hspi1, (uint8_t*)&ADC_Res, 1,200);
+}
+/**
+ * @brief Sends a 16-bit data frame to an SPI slave.
+ *
+ * @param data   16-bit data to be sent.
+ * @param GPIOx  GPIO port for the NSS (Slave Select) pin.
+ * @param GPIO_Pin GPIO pin number for the NSS (Slave Select).
+ */
+void SPI_Send(uint16_t data, GPIO_TypeDef* GPIOx, uint16_t GPIO_Pin) {
+    /*Pull the NSS line low to select the slave*/
+    HAL_GPIO_WritePin(GPIOx, GPIO_Pin, GPIO_PIN_RESET);
+
+    /* Transmit the data over SPI1
+     * Note: The size is set to 1, meaning **1 word** (2 bytes) because we use a 16-bit data.
+     * */
+    HAL_SPI_Transmit(&hspi1, (uint8_t*)&data, 1, HAL_MAX_DELAY);
+
+    /*Pull the NSS line high to release the slave*/
+    HAL_GPIO_WritePin(GPIOx, GPIO_Pin, GPIO_PIN_SET);
 }
 /* USER CODE END PFP */
 
@@ -133,10 +150,21 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-	      /* Start ADC conversion in interrupt mode*/
-	      HAL_ADC_Start_IT(&hadc);
-	      /*Read every 100ms*/
-	      HAL_Delay(100);
+		/* Start ADC conversion in interrupt mode*/
+		HAL_ADC_Start_IT(&hadc);
+		/**
+		 * Send the analog value to Slave 1 (STM32F0)
+		 * GPIOA, PIN 4 is the NSS (Slave Select) line for the first slave
+		 */
+		SPI_Send(ADC_Res, GPIOA, GPIO_PIN_4);
+		HAL_Delay(100);  // Small delay between transmissions
+
+		/**
+		 * Send the same analog value to Slave 2 (Arduino Uno)
+		 * GPIOA, PIN 3 is the NSS (Slave Select) line for the second slave
+		 */
+		SPI_Send(ADC_Res, GPIOA, GPIO_PIN_3);
+		HAL_Delay(100);  // Small delay between transmissions
 	}
   /* USER CODE END 3 */
 }
@@ -257,7 +285,7 @@ static void MX_SPI1_Init(void)
   hspi1.Init.DataSize = SPI_DATASIZE_16BIT;
   hspi1.Init.CLKPolarity = SPI_POLARITY_LOW;
   hspi1.Init.CLKPhase = SPI_PHASE_1EDGE;
-  hspi1.Init.NSS = SPI_NSS_HARD_OUTPUT;
+  hspi1.Init.NSS = SPI_NSS_SOFT;
   hspi1.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_2;
   hspi1.Init.FirstBit = SPI_FIRSTBIT_MSB;
   hspi1.Init.TIMode = SPI_TIMODE_DISABLE;
@@ -286,6 +314,16 @@ static void MX_GPIO_Init(void)
 
   /* GPIO Ports Clock Enable */
   __HAL_RCC_GPIOA_CLK_ENABLE();
+
+  /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(GPIOA, GPIO_PIN_3|GPIO_PIN_4, GPIO_PIN_RESET);
+
+  /*Configure GPIO pins : PA3 PA4 */
+  GPIO_InitStruct.Pin = GPIO_PIN_3|GPIO_PIN_4;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
   /*Configure GPIO pins : PA9 PA10 */
   GPIO_InitStruct.Pin = GPIO_PIN_9|GPIO_PIN_10;
