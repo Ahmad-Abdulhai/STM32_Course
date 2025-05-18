@@ -1,7 +1,8 @@
 #MicroXplorer Configuration settings - do not modify
 FREERTOS.FootprintOK=true
-FREERTOS.IPParameters=Tasks01,configUSE_NEWLIB_REENTRANT,FootprintOK,configUSE_IDLE_HOOK
-FREERTOS.Tasks01=defaultTask,0,128,StartDefaultTask,Default,NULL,Dynamic,NULL,NULL;Task2,-1,128,StartTask2,Default,NULL,Dynamic,NULL,NULL;Task3,1,128,StartTask3,Default,NULL,Dynamic,NULL,NULL
+FREERTOS.INCLUDE_vTaskDelayUntil=1
+FREERTOS.IPParameters=Tasks01,configUSE_NEWLIB_REENTRANT,FootprintOK,configUSE_IDLE_HOOK,INCLUDE_vTaskDelayUntil
+FREERTOS.Tasks01=defaultTask,0,128,StartDefaultTask,Default,NULL,Dynamic,NULL,NULL;Task2,1,128,StartTask2,Default,NULL,Dynamic,NULL,NULL
 FREERTOS.configUSE_IDLE_HOOK=0
 FREERTOS.configUSE_NEWLIB_REENTRANT=1
 File.Version=6
