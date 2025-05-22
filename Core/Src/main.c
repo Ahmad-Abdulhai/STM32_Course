@@ -42,8 +42,8 @@
 /* Private variables ---------------------------------------------------------*/
 UART_HandleTypeDef huart2;
 
-osThreadId bouttonTaskHandle;
-osThreadId LedTaskHandle;
+osThreadId defaultTaskHandle;
+osThreadId emergencyTaskHandle;
 /* USER CODE BEGIN PV */
 uint32_t indx = 0;
 /* USER CODE END PV */
@@ -52,14 +52,31 @@ uint32_t indx = 0;
 void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
 static void MX_USART2_UART_Init(void);
-void startBouttonTask(void const * argument);
-void StartLedTask(void const * argument);
+void startDefaultTask(void const * argument);
+void StartEmergencyTask(void const * argument);
 
 /* USER CODE BEGIN PFP */
 /*To make printf() work over UART in STM32, we override(Redirected to UART)*/
 int _write(int file, char *ptr, int len) {
 	HAL_UART_Transmit(&huart2, (uint8_t*) ptr, len, 100);
 	return len;
+}
+/**
+  * @brief  EXTI line detection callback.
+  * @param  GPIO_Pin Specifies the port pin connected to corresponding EXTI line.
+  * @retval None
+  */
+void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
+{
+	if(GPIO_Pin == GPIO_PIN_0){
+		BaseType_t xHigherPriorityTaskWoken = pdFALSE;
+
+		// Notify the button task that an interrupt occurred
+		vTaskNotifyGiveFromISR(emergencyTaskHandle, &xHigherPriorityTaskWoken);
+
+		// If the button task has a higher priority than the current task, switch immediately
+		portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
+	}
 }
 /* USER CODE END PFP */
 
@@ -118,13 +135,13 @@ int main(void)
   /* USER CODE END RTOS_QUEUES */
 
   /* Create the thread(s) */
-  /* definition and creation of bouttonTask */
-  osThreadDef(bouttonTask, startBouttonTask, osPriorityNormal, 0, 128);
-  bouttonTaskHandle = osThreadCreate(osThread(bouttonTask), NULL);
+  /* definition and creation of defaultTask */
+  osThreadDef(defaultTask, startDefaultTask, osPriorityNormal, 0, 128);
+  defaultTaskHandle = osThreadCreate(osThread(defaultTask), NULL);
 
-  /* definition and creation of LedTask */
-  osThreadDef(LedTask, StartLedTask, osPriorityHigh, 0, 128);
-  LedTaskHandle = osThreadCreate(osThread(LedTask), NULL);
+  /* definition and creation of emergencyTask */
+  osThreadDef(emergencyTask, StartEmergencyTask, osPriorityHigh, 0, 128);
+  emergencyTaskHandle = osThreadCreate(osThread(emergencyTask), NULL);
 
   /* USER CODE BEGIN RTOS_THREADS */
 	/* add threads, ... */
@@ -235,20 +252,24 @@ static void MX_GPIO_Init(void)
   __HAL_RCC_GPIOB_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_0, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_0|GPIO_PIN_10|GPIO_PIN_11|GPIO_PIN_12, GPIO_PIN_RESET);
 
   /*Configure GPIO pin : PA0 */
   GPIO_InitStruct.Pin = GPIO_PIN_0;
-  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
+  GPIO_InitStruct.Mode = GPIO_MODE_IT_FALLING;
   GPIO_InitStruct.Pull = GPIO_PULLUP;
   HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
-  /*Configure GPIO pin : PB0 */
-  GPIO_InitStruct.Pin = GPIO_PIN_0;
+  /*Configure GPIO pins : PB0 PB10 PB11 PB12 */
+  GPIO_InitStruct.Pin = GPIO_PIN_0|GPIO_PIN_10|GPIO_PIN_11|GPIO_PIN_12;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
+
+  /* EXTI interrupt init*/
+  HAL_NVIC_SetPriority(EXTI0_1_IRQn, 3, 0);
+  HAL_NVIC_EnableIRQ(EXTI0_1_IRQn);
 
 }
 
@@ -256,55 +277,68 @@ static void MX_GPIO_Init(void)
 
 /* USER CODE END 4 */
 
-/* USER CODE BEGIN Header_startBouttonTask */
+/* USER CODE BEGIN Header_startDefaultTask */
 /**
-  * @brief  Function implementing the bouttonTask thread.
+  * @brief  Function implementing the defaultTask thread.
   * @param  argument: Not used
   * @retval None
   */
-/* USER CODE END Header_startBouttonTask */
-void startBouttonTask(void const * argument)
+/* USER CODE END Header_startDefaultTask */
+void startDefaultTask(void const * argument)
 {
-	/* USER CODE BEGIN 5 */
+  /* USER CODE BEGIN 5 */
 	/* Infinite loop */
 	for (;;) {
-		/*Read Button State (PA0)*/
-		if (HAL_GPIO_ReadPin(GPIOA, GPIO_PIN_0) == GPIO_PIN_RESET) {
-			/*Send Notification to Led Task (LED Toggle)*/
-			xTaskNotifyGive(LedTaskHandle);
-			printf("\rBouttonTask: Button Pressed, Notifying LedTask...\n");
-			/*Debounce Delay*/
-			HAL_Delay(150);
-		}
-		/*Send Task Status via UART*/
-		printf("\rBouttonTask: Monitoring Button...\n");
-
-		/*Wait 100ms before next check*/
-		osDelay(100);
+		// LED1 ON
+		HAL_GPIO_WritePin(GPIOB, GPIO_PIN_10, GPIO_PIN_SET);
+		printf("\rLED1 ON\n");
+		HAL_Delay(350);
+		HAL_GPIO_WritePin(GPIOB, GPIO_PIN_10, GPIO_PIN_RESET);
+		HAL_Delay(350);
+		// LED2 ON
+		HAL_GPIO_WritePin(GPIOB, GPIO_PIN_11, GPIO_PIN_SET);
+		printf("\rLED2 ON\n");
+		HAL_Delay(350);
+		HAL_GPIO_WritePin(GPIOB, GPIO_PIN_11, GPIO_PIN_RESET);
+		HAL_Delay(350);
+		// LED3 ON
+		HAL_GPIO_WritePin(GPIOB, GPIO_PIN_12, GPIO_PIN_SET);
+		printf("\rLED3 ON\n");
+		HAL_Delay(350);
+		HAL_GPIO_WritePin(GPIOB, GPIO_PIN_12, GPIO_PIN_RESET);
+		HAL_Delay(350);
 	}
-	/* USER CODE END 5 */
+  /* USER CODE END 5 */
 }
 
-/* USER CODE BEGIN Header_StartLedTask */
+/* USER CODE BEGIN Header_StartEmergencyTask */
 /**
- * @brief Function implementing the LedTask thread.
+ * @brief Function implementing the emergencyTask thread.
  * @param argument: Not used
  * @retval None
  */
-/* USER CODE END Header_StartLedTask */
-void StartLedTask(void const * argument)
+/* USER CODE END Header_StartEmergencyTask */
+void StartEmergencyTask(void const * argument)
 {
-	/* USER CODE BEGIN StartLedTask */
+  /* USER CODE BEGIN StartEmergencyTask */
 	/* Infinite loop */
 	for(;;)
 	{
-		/*Wait for notification from LedTask*/
+		/*Wait until button interrupt sends a notification*/
 		ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
-		/*Toggle LED on PB0*/
-		HAL_GPIO_TogglePin(GPIOB, GPIO_PIN_0);
-		printf("\rLedTask: LED Toggled!\n");
+		/*=== Debounce delay ===*/
+		 HAL_Delay(50);
+		/*Emergency LED blink pattern*/
+		printf("\rEmergency Mode Triggered!\n");
+		for (uint8_t i = 0; i < 20; i++) {
+			/*Blink LED0 fast*/
+			HAL_GPIO_TogglePin(GPIOB, GPIO_PIN_0);
+			HAL_Delay(100);  // Fast blinking
+		}
+		/*Ensure LED off at the end*/
+		HAL_GPIO_WritePin(GPIOB, GPIO_PIN_0, GPIO_PIN_RESET);
 	}
-	/* USER CODE END StartLedTask */
+  /* USER CODE END StartEmergencyTask */
 }
 
 /**
