@@ -43,7 +43,8 @@
 UART_HandleTypeDef huart2;
 
 osThreadId defaultTaskHandle;
-osThreadId emergencyTaskHandle;
+osTimerId periodicTimerHandle;
+osTimerId OneShotTimerHandle;
 /* USER CODE BEGIN PV */
 uint32_t indx = 0;
 /* USER CODE END PV */
@@ -53,30 +54,14 @@ void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
 static void MX_USART2_UART_Init(void);
 void startDefaultTask(void const * argument);
-void StartEmergencyTask(void const * argument);
+void periodicTimerCallback(void const * argument);
+void OneShotTimerCallback(void const * argument);
 
 /* USER CODE BEGIN PFP */
 /*To make printf() work over UART in STM32, we override(Redirected to UART)*/
 int _write(int file, char *ptr, int len) {
 	HAL_UART_Transmit(&huart2, (uint8_t*) ptr, len, 100);
 	return len;
-}
-/**
-  * @brief  EXTI line detection callback.
-  * @param  GPIO_Pin Specifies the port pin connected to corresponding EXTI line.
-  * @retval None
-  */
-void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
-{
-	if(GPIO_Pin == GPIO_PIN_0){
-		BaseType_t xHigherPriorityTaskWoken = pdFALSE;
-
-		// Notify the button task that an interrupt occurred
-		vTaskNotifyGiveFromISR(emergencyTaskHandle, &xHigherPriorityTaskWoken);
-
-		// If the button task has a higher priority than the current task, switch immediately
-		portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
-	}
 }
 /* USER CODE END PFP */
 
@@ -126,8 +111,25 @@ int main(void)
 	/* add semaphores, ... */
   /* USER CODE END RTOS_SEMAPHORES */
 
+  /* Create the timer(s) */
+  /* definition and creation of periodicTimer */
+  osTimerDef(periodicTimer, periodicTimerCallback);
+  periodicTimerHandle = osTimerCreate(osTimer(periodicTimer), osTimerPeriodic, NULL);
+
+  /* definition and creation of OneShotTimer */
+  osTimerDef(OneShotTimer, OneShotTimerCallback);
+  OneShotTimerHandle = osTimerCreate(osTimer(OneShotTimer), osTimerOnce, NULL);
+
   /* USER CODE BEGIN RTOS_TIMERS */
 	/* start timers, add new ones, ... */
+  /*Start the Timers*/
+      if (OneShotTimerHandle != NULL) {
+          osTimerStart(OneShotTimerHandle, 2000);  // 2000ms = 2s
+      }
+
+      if (periodicTimerHandle != NULL) {
+          osTimerStart(periodicTimerHandle, 500);  // 500ms
+      }
   /* USER CODE END RTOS_TIMERS */
 
   /* USER CODE BEGIN RTOS_QUEUES */
@@ -138,10 +140,6 @@ int main(void)
   /* definition and creation of defaultTask */
   osThreadDef(defaultTask, startDefaultTask, osPriorityNormal, 0, 128);
   defaultTaskHandle = osThreadCreate(osThread(defaultTask), NULL);
-
-  /* definition and creation of emergencyTask */
-  osThreadDef(emergencyTask, StartEmergencyTask, osPriorityHigh, 0, 128);
-  emergencyTaskHandle = osThreadCreate(osThread(emergencyTask), NULL);
 
   /* USER CODE BEGIN RTOS_THREADS */
 	/* add threads, ... */
@@ -252,24 +250,14 @@ static void MX_GPIO_Init(void)
   __HAL_RCC_GPIOB_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_0|GPIO_PIN_10|GPIO_PIN_11|GPIO_PIN_12, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_0, GPIO_PIN_RESET);
 
-  /*Configure GPIO pin : PA0 */
+  /*Configure GPIO pin : PB0 */
   GPIO_InitStruct.Pin = GPIO_PIN_0;
-  GPIO_InitStruct.Mode = GPIO_MODE_IT_FALLING;
-  GPIO_InitStruct.Pull = GPIO_PULLUP;
-  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
-
-  /*Configure GPIO pins : PB0 PB10 PB11 PB12 */
-  GPIO_InitStruct.Pin = GPIO_PIN_0|GPIO_PIN_10|GPIO_PIN_11|GPIO_PIN_12;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
-
-  /* EXTI interrupt init*/
-  HAL_NVIC_SetPriority(EXTI0_1_IRQn, 3, 0);
-  HAL_NVIC_EnableIRQ(EXTI0_1_IRQn);
 
 }
 
@@ -289,56 +277,26 @@ void startDefaultTask(void const * argument)
   /* USER CODE BEGIN 5 */
 	/* Infinite loop */
 	for (;;) {
-		// LED1 ON
-		HAL_GPIO_WritePin(GPIOB, GPIO_PIN_10, GPIO_PIN_SET);
-		printf("\rLED1 ON\n");
-		HAL_Delay(350);
-		HAL_GPIO_WritePin(GPIOB, GPIO_PIN_10, GPIO_PIN_RESET);
-		HAL_Delay(350);
-		// LED2 ON
-		HAL_GPIO_WritePin(GPIOB, GPIO_PIN_11, GPIO_PIN_SET);
-		printf("\rLED2 ON\n");
-		HAL_Delay(350);
-		HAL_GPIO_WritePin(GPIOB, GPIO_PIN_11, GPIO_PIN_RESET);
-		HAL_Delay(350);
-		// LED3 ON
-		HAL_GPIO_WritePin(GPIOB, GPIO_PIN_12, GPIO_PIN_SET);
-		printf("\rLED3 ON\n");
-		HAL_Delay(350);
-		HAL_GPIO_WritePin(GPIOB, GPIO_PIN_12, GPIO_PIN_RESET);
-		HAL_Delay(350);
+		osDelay(1);
 	}
   /* USER CODE END 5 */
 }
 
-/* USER CODE BEGIN Header_StartEmergencyTask */
-/**
- * @brief Function implementing the emergencyTask thread.
- * @param argument: Not used
- * @retval None
- */
-/* USER CODE END Header_StartEmergencyTask */
-void StartEmergencyTask(void const * argument)
+/* periodicTimerCallback function */
+void periodicTimerCallback(void const * argument)
 {
-  /* USER CODE BEGIN StartEmergencyTask */
-	/* Infinite loop */
-	for(;;)
-	{
-		/*Wait until button interrupt sends a notification*/
-		ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
-		/*=== Debounce delay ===*/
-		 HAL_Delay(50);
-		/*Emergency LED blink pattern*/
-		printf("\rEmergency Mode Triggered!\n");
-		for (uint8_t i = 0; i < 20; i++) {
-			/*Blink LED0 fast*/
-			HAL_GPIO_TogglePin(GPIOB, GPIO_PIN_0);
-			HAL_Delay(100);  // Fast blinking
-		}
-		/*Ensure LED off at the end*/
-		HAL_GPIO_WritePin(GPIOB, GPIO_PIN_0, GPIO_PIN_RESET);
-	}
-  /* USER CODE END StartEmergencyTask */
+  /* USER CODE BEGIN periodicTimerCallback */
+	   printf("\rPeriodic Timer Expired! Blinking LED...\n");
+	    HAL_GPIO_TogglePin(GPIOB, GPIO_PIN_0);  // Toggle LED on PB0!
+  /* USER CODE END periodicTimerCallback */
+}
+
+/* OneShotTimerCallback function */
+void OneShotTimerCallback(void const * argument)
+{
+  /* USER CODE BEGIN OneShotTimerCallback */
+	 printf("\rOne-Shot Timer Expired!\n");
+  /* USER CODE END OneShotTimerCallback */
 }
 
 /**
