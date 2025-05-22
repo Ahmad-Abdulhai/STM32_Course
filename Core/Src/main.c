@@ -44,6 +44,7 @@ UART_HandleTypeDef huart2;
 
 osThreadId defaultTaskHandle;
 osThreadId Task2Handle;
+osThreadId Task3Handle;
 /* USER CODE BEGIN PV */
 uint32_t indx = 0;
 /* USER CODE END PV */
@@ -54,6 +55,7 @@ static void MX_GPIO_Init(void);
 static void MX_USART2_UART_Init(void);
 void StartDefaultTask(void const * argument);
 void StartTask2(void const * argument);
+void StartTask3(void const * argument);
 
 /* USER CODE BEGIN PFP */
 /*To make printf() work over UART in STM32, we override(Redirected to UART)*/
@@ -123,8 +125,12 @@ int main(void)
   defaultTaskHandle = osThreadCreate(osThread(defaultTask), NULL);
 
   /* definition and creation of Task2 */
-  osThreadDef(Task2, StartTask2, osPriorityAboveNormal, 0, 128);
+  osThreadDef(Task2, StartTask2, osPriorityBelowNormal, 0, 128);
   Task2Handle = osThreadCreate(osThread(Task2), NULL);
+
+  /* definition and creation of Task3 */
+  osThreadDef(Task3, StartTask3, osPriorityAboveNormal, 0, 128);
+  Task3Handle = osThreadCreate(osThread(Task3), NULL);
 
   /* USER CODE BEGIN RTOS_THREADS */
 	/* add threads, ... */
@@ -265,7 +271,7 @@ void StartDefaultTask(void const * argument)
 		/*Toggle LED on bard*/
 		HAL_GPIO_TogglePin(GPIOB, GPIO_PIN_0);
 		printf("\rHello DEFTASK\n");
-		osDelay(1000);
+		osDelay(500);
 	}
   /* USER CODE END 5 */
 }
@@ -279,43 +285,46 @@ void StartDefaultTask(void const * argument)
 /* USER CODE END Header_StartTask2 */
 void StartTask2(void const * argument)
 {
-  /* USER CODE BEGIN StartTask2 */
+	/* USER CODE BEGIN StartTask2 */
 	/* Infinite loop */
 	for (;;) {
-		printf("\rTASK2, indx= %lu\n", indx++);
-		/*Suspend default task*/
-		if (indx == 4) {
-			printf("\rSuspending DefaultTask\n");
-			osThreadSuspend(defaultTaskHandle);
-		}
-		/*Resume default task*/
-		if (indx == 7) {
-			printf("\rResuming DefaultTask\n");
-			osThreadResume(defaultTaskHandle);
-		}
-		/*terminate default task*/
-		if (indx == 10){
-			printf ("\rTerminating DefaultTask\n");
-			osThreadTerminate(defaultTaskHandle);
-		}
-
-//		if (indx == 10){
-//			uint32_t PreviousWakeTime = osKernelSysTick();
-//			osDelayUntil(&PreviousWakeTime, 5000);  // 3 sec inactive
-//		}
-		osDelay(2000);
+		printf("\rHello TASK2\n");
+		osDelay(500);
 	}
-  /* USER CODE END StartTask2 */
+	/* USER CODE END StartTask2 */
 }
 
+/* USER CODE BEGIN Header_StartTask3 */
 /**
-  * @brief  Period elapsed callback in non blocking mode
-  * @note   This function is called  when TIM6 interrupt took place, inside
-  * HAL_TIM_IRQHandler(). It makes a direct call to HAL_IncTick() to increment
-  * a global variable "uwTick" used as application time base.
-  * @param  htim : TIM handle
-  * @retval None
-  */
+ * @brief Function implementing the Task3 thread.
+ * @param argument: Not used
+ * @retval None
+ */
+/* USER CODE END Header_StartTask3 */
+void StartTask3(void const * argument)
+{
+	/* USER CODE BEGIN StartTask3 */
+	/* Infinite loop */
+	for(;;)
+	{
+		printf("\rHello TASK3\n");
+		osDelay(500);
+	}
+	/* USER CODE END StartTask3 */
+}
+void vApplicationIdleHook(void) {
+	// Avoid flooding UART
+	HAL_Delay(10);  // Wait 10 ms to reduce UART spam
+	printf("\rHello IDLE TASK\n");
+}
+/**
+ * @brief  Period elapsed callback in non blocking mode
+ * @note   This function is called  when TIM6 interrupt took place, inside
+ * HAL_TIM_IRQHandler(). It makes a direct call to HAL_IncTick() to increment
+ * a global variable "uwTick" used as application time base.
+ * @param  htim : TIM handle
+ * @retval None
+ */
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 {
   /* USER CODE BEGIN Callback 0 */
