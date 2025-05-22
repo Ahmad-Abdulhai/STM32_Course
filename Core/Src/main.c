@@ -42,9 +42,8 @@
 /* Private variables ---------------------------------------------------------*/
 UART_HandleTypeDef huart2;
 
-osThreadId defaultTaskHandle;
-osThreadId Task2Handle;
-osThreadId Task3Handle;
+osThreadId bouttonTaskHandle;
+osThreadId LedTaskHandle;
 /* USER CODE BEGIN PV */
 uint32_t indx = 0;
 /* USER CODE END PV */
@@ -53,9 +52,8 @@ uint32_t indx = 0;
 void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
 static void MX_USART2_UART_Init(void);
-void StartDefaultTask(void const * argument);
-void StartTask2(void const * argument);
-void StartTask3(void const * argument);
+void startBouttonTask(void const * argument);
+void StartLedTask(void const * argument);
 
 /* USER CODE BEGIN PFP */
 /*To make printf() work over UART in STM32, we override(Redirected to UART)*/
@@ -120,17 +118,13 @@ int main(void)
   /* USER CODE END RTOS_QUEUES */
 
   /* Create the thread(s) */
-  /* definition and creation of defaultTask */
-  osThreadDef(defaultTask, StartDefaultTask, osPriorityNormal, 0, 128);
-  defaultTaskHandle = osThreadCreate(osThread(defaultTask), NULL);
+  /* definition and creation of bouttonTask */
+  osThreadDef(bouttonTask, startBouttonTask, osPriorityNormal, 0, 128);
+  bouttonTaskHandle = osThreadCreate(osThread(bouttonTask), NULL);
 
-  /* definition and creation of Task2 */
-  osThreadDef(Task2, StartTask2, osPriorityBelowNormal, 0, 128);
-  Task2Handle = osThreadCreate(osThread(Task2), NULL);
-
-  /* definition and creation of Task3 */
-  osThreadDef(Task3, StartTask3, osPriorityAboveNormal, 0, 128);
-  Task3Handle = osThreadCreate(osThread(Task3), NULL);
+  /* definition and creation of LedTask */
+  osThreadDef(LedTask, StartLedTask, osPriorityHigh, 0, 128);
+  LedTaskHandle = osThreadCreate(osThread(LedTask), NULL);
 
   /* USER CODE BEGIN RTOS_THREADS */
 	/* add threads, ... */
@@ -243,6 +237,12 @@ static void MX_GPIO_Init(void)
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPIOB, GPIO_PIN_0, GPIO_PIN_RESET);
 
+  /*Configure GPIO pin : PA0 */
+  GPIO_InitStruct.Pin = GPIO_PIN_0;
+  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
+  GPIO_InitStruct.Pull = GPIO_PULLUP;
+  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+
   /*Configure GPIO pin : PB0 */
   GPIO_InitStruct.Pin = GPIO_PIN_0;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
@@ -256,75 +256,65 @@ static void MX_GPIO_Init(void)
 
 /* USER CODE END 4 */
 
-/* USER CODE BEGIN Header_StartDefaultTask */
+/* USER CODE BEGIN Header_startBouttonTask */
 /**
- * @brief  Function implementing the defaultTask thread.
- * @param  argument: Not used
- * @retval None
- */
-/* USER CODE END Header_StartDefaultTask */
-void StartDefaultTask(void const * argument)
+  * @brief  Function implementing the bouttonTask thread.
+  * @param  argument: Not used
+  * @retval None
+  */
+/* USER CODE END Header_startBouttonTask */
+void startBouttonTask(void const * argument)
 {
-  /* USER CODE BEGIN 5 */
+	/* USER CODE BEGIN 5 */
 	/* Infinite loop */
 	for (;;) {
-		/*Toggle LED on bard*/
-		HAL_GPIO_TogglePin(GPIOB, GPIO_PIN_0);
-		printf("\rHello DEFTASK\n");
-		osDelay(500);
+		/*Read Button State (PA0)*/
+		if (HAL_GPIO_ReadPin(GPIOA, GPIO_PIN_0) == GPIO_PIN_RESET) {
+			/*Send Notification to Led Task (LED Toggle)*/
+			xTaskNotifyGive(LedTaskHandle);
+			printf("\rBouttonTask: Button Pressed, Notifying LedTask...\n");
+			/*Debounce Delay*/
+			HAL_Delay(150);
+		}
+		/*Send Task Status via UART*/
+		printf("\rBouttonTask: Monitoring Button...\n");
+
+		/*Wait 100ms before next check*/
+		osDelay(100);
 	}
-  /* USER CODE END 5 */
+	/* USER CODE END 5 */
 }
 
-/* USER CODE BEGIN Header_StartTask2 */
+/* USER CODE BEGIN Header_StartLedTask */
 /**
- * @brief Function implementing the Task2 thread.
+ * @brief Function implementing the LedTask thread.
  * @param argument: Not used
  * @retval None
  */
-/* USER CODE END Header_StartTask2 */
-void StartTask2(void const * argument)
+/* USER CODE END Header_StartLedTask */
+void StartLedTask(void const * argument)
 {
-	/* USER CODE BEGIN StartTask2 */
-	/* Infinite loop */
-	for (;;) {
-		printf("\rHello TASK2\n");
-		osDelay(500);
-	}
-	/* USER CODE END StartTask2 */
-}
-
-/* USER CODE BEGIN Header_StartTask3 */
-/**
- * @brief Function implementing the Task3 thread.
- * @param argument: Not used
- * @retval None
- */
-/* USER CODE END Header_StartTask3 */
-void StartTask3(void const * argument)
-{
-	/* USER CODE BEGIN StartTask3 */
+	/* USER CODE BEGIN StartLedTask */
 	/* Infinite loop */
 	for(;;)
 	{
-		printf("\rHello TASK3\n");
-		osDelay(500);
+		/*Wait for notification from LedTask*/
+		ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
+		/*Toggle LED on PB0*/
+		HAL_GPIO_TogglePin(GPIOB, GPIO_PIN_0);
+		printf("\rLedTask: LED Toggled!\n");
 	}
-	/* USER CODE END StartTask3 */
+	/* USER CODE END StartLedTask */
 }
-void vApplicationIdleHook(void) {
-	// Avoid flooding UART
-	HAL_Delay(10);  // Wait 10 ms to reduce UART spam
-	printf("\rHello IDLE TASK\n");
-}
+
 /**
- * @brief  Period elapsed callback in non blocking mode
- * @note   This function is called  when TIM6 interrupt took place, inside
- * HAL_TIM_IRQHandler(). It makes a direct call to HAL_IncTick() to increment
- * a global variable "uwTick" used as application time base.
- * @param  htim : TIM handle
- * @retval None
- */
+  * @brief  Period elapsed callback in non blocking mode
+  * @note   This function is called  when TIM6 interrupt took place, inside
+  * HAL_TIM_IRQHandler(). It makes a direct call to HAL_IncTick() to increment
+  * a global variable "uwTick" used as application time base.
+  * @param  htim : TIM handle
+  * @retval None
+  */
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 {
   /* USER CODE BEGIN Callback 0 */
